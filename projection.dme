@@ -13,7 +13,10 @@
 // END_PREFERENCES
 
 // BEGIN_INCLUDE
+#include "_defines.dm"
 #include "client.dm"
 #include "matrix4.dm"
+#include "vector4.dm"
+#include "vertex.dm"
 // END_INCLUDE
 

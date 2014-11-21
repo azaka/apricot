@@ -2,7 +2,9 @@ matrix4
 	var
 		list/dat[4][4]
 	New()
+	#ifdef VERBOSE
 		world << "[args.len] arguments received"
+	#endif
 		if(args.len < 4 * 4)
 			return
 
@@ -13,23 +15,32 @@ matrix4
 
 	proc
 		multiply(matrix4/m)
-			if(!istype(m))
-				return
+			if(istype(m))
 
-			var/matrix4/res = new
-			for(var/r = 1 to 4)
-				for(var/c = 1 to 4)
+				var/matrix4/res = new
+				for(var/r = 1 to 4)
+					for(var/c = 1 to 4)
+						res.dat[r][c] = 0
+						for(var/i = 1 to 4)
+							res.dat[r][c] += dat[r][i] * m.dat[i][c]
+
+				return res
+			else if(istype(m, /vector4))
+				var/vector4/res = new
+				var/vector4/v = m
+				for(var/r = 1 to 4)
+					var/c = 1
 					res.dat[r][c] = 0
 					for(var/i = 1 to 4)
-						res.dat[r][c] += dat[r][i] * m.dat[i][c]
+						res.dat[r][c] += dat[r][i] * v.dat[i][c]
 
-			return res
+				return res
 
 		print()
 			world << "\<[type]\>:\ref[src]"
 			var/str = ""
-			for(var/r = 1 to 4)
-				for(var/c = 1 to 4)
+			for(var/r = 1 to dat.len)
+				for(var/c = 1 to length(dat[1]))
 					if(c == 1)
 						str += "[dat[r][c]]"
 					else
