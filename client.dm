@@ -106,6 +106,23 @@ client
 			src << "screen coord: [screen_pos.get_x()]:[screen_pos.get_y()]"
 			draw_point(screen_pos.get_x(), screen_pos.get_y())
 
+		draw_cube_with_view()
+			var/list/vertices = list()
+
+			vertices += new /vertex(1, 1, -1)
+			vertices += new /vertex(-1, 1, -1)
+			vertices += new /vertex(1, -1, -1)
+			vertices += new /vertex(-1, -1, -1)
+
+			vertices += new /vertex(1, 1, 1)
+			vertices += new /vertex(-1, 1, 1)
+			vertices += new /vertex(1, -1, 1)
+			vertices += new /vertex(-1, -1, 1)
+
+			vertices += new /vertex(0, 0, 0)
+
+			project_vertices(vertices, 1)
+
 		draw_cube()
 			var/list/vertices = list()
 			//front
@@ -125,7 +142,40 @@ client
 
 
 	proc
-		project_vertices(list/vertices)
+		project_vertices(list/vertices, apply_view)
+			var/matrix4/view_transform = null
+
+			if(apply_view)
+
+				//eye at origin
+				var/vector3/e = new	//origin
+				var/vector3/g = new(0, 0, 1)
+				var/vector3/t = new(0, 1, 0)
+
+				//uvw
+				var/vector3/w = g.multiply(-1)
+				w.normalize()
+
+				var/vector3/u = t.cross(w)
+				u.normalize()
+
+				var/vector3/v = w.cross(u)
+
+				//view
+				var/matrix4/view_translate = new \
+				(1, 0, 0, e.get_x(), \
+				0, 1, 0, e.get_y(), \
+				0, 0, 1, e.get_z(), \
+				0, 0, 0, 1)
+
+				var/matrix4/view_scale = new \
+				(u.get_x(), u.get_y(), u.get_z(), 0, \
+				v.get_x(), v.get_y(), v.get_z(), 0, \
+				w.get_x(), w.get_y(), w.get_z(), 0, \
+				0, 0, 0, 1)
+
+				view_transform = view_scale.multiply(view_translate)
+
 			//orthographic box
 			var/l = -3
 			var/r = 3
@@ -158,7 +208,13 @@ client
 			0, 0, 1, 0, \
 			0, 0, 0, 1)
 
-			var/matrix4/screen_transform = window_transform.multiply(ortho_transform)
+			var/matrix4/screen_transform = null
+
+			if(apply_view)
+				var/matrix4/view = ortho_transform.multiply(view_transform)
+				screen_transform = window_transform.multiply(view)
+			else
+				screen_transform = window_transform.multiply(ortho_transform)
 
 			for(var/vertex/v in vertices)
 				var/vector4/screen_pos = screen_transform.multiply(v.position)
