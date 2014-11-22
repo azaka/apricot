@@ -1,4 +1,7 @@
 client
+	var
+		matrix/transform
+
 	verb
 		new_matrix4x4()
 			var/matrix4/mat = new \
@@ -35,7 +38,7 @@ client
 			vres.print()
 
 			//0, 3, -1	//front of orthographic box
-			var/vertex/v1 = new(0, 3, -1)
+			var/vertex/v1 = new(0, 0, -1)
 
 			src << "sample vertex:"
 			v1.position.print(1)
@@ -81,12 +84,16 @@ client
 			src << "orthographic x vertex"
 			pos2.print(1)
 
-			ASSERT(pos2.get_x() == 0 && pos2.get_y() == 1 && pos2.get_z() == 1)
+			//ASSERT(pos2.get_x() == 0 && pos2.get_y() == 1 && pos2.get_z() == 1)
 
 			//screen
 			//640x640
-			var/nx = 640
-			var/ny = 640
+			var/nx = world.maxx * world.icon_size
+			var/ny = world.maxy * world.icon_size
+
+			world << world.maxx
+			world << world.maxy
+			world << world.icon_size
 
 			var/matrix4/screen_transform = new \
 			(nx / 2, 0, 0, (nx - 1) / 2, \
@@ -97,3 +104,14 @@ client
 			var/vector4/screen_pos = screen_transform.multiply(pos2)
 
 			src << "screen coord: [screen_pos.get_x()]:[screen_pos.get_y()]"
+			draw_point(screen_pos.get_x(), screen_pos.get_y())
+
+	proc
+		draw_point(x, y)
+			//new
+			var/obj/O = new
+			O.screen_loc = "1,1"
+			screen += O
+
+			O.transform = matrix(x, y, MATRIX_TRANSLATE)
+
