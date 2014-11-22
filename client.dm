@@ -106,12 +106,72 @@ client
 			src << "screen coord: [screen_pos.get_x()]:[screen_pos.get_y()]"
 			draw_point(screen_pos.get_x(), screen_pos.get_y())
 
+		draw_cube()
+			var/list/vertices = list()
+			//front
+			vertices += new /vertex(1, 1, -1)
+			vertices += new /vertex(-1, 1, -1)
+			vertices += new /vertex(1, -1, -1)
+			vertices += new /vertex(-1, -1, -1)
+
+			vertices += new /vertex(1, 1, 1)
+			vertices += new /vertex(-1, 1, 1)
+			vertices += new /vertex(1, -1, 1)
+			vertices += new /vertex(-1, -1, 1)
+
+			vertices += new /vertex(0, 0, 0)
+
+			project_vertices(vertices)
+
+
 	proc
+		project_vertices(list/vertices)
+			//orthographic box
+			var/l = -3
+			var/r = 3
+			var/t = 3
+			var/b = -3
+			var/n = -1
+			var/f = -3
+
+			//origin
+			var/matrix4/ortho_translate = new \
+			(1, 0, 0, (l + r) / -2, \
+			0, 1, 0, (b + t) / -2, \
+			0, 0, 1, (n + f) / -2, \
+			0, 0, 0, 1)
+
+			var/matrix4/ortho_scale = new \
+			(2 / (r - l), 0, 0, 0, \
+			0, 2 / (t - b), 0, 0, \
+			0, 0, 2 / (n - f), 0, \
+			0, 0, 0, 1)
+
+			var/matrix4/ortho_transform = ortho_scale.multiply(ortho_translate)
+
+			var/nx = world.maxx * world.icon_size
+			var/ny = world.maxy * world.icon_size
+
+			var/matrix4/window_transform = new \
+			(nx / 2, 0, 0, (nx - 1) / 2, \
+			0, ny / 2, 0, (ny - 1) / 2, \
+			0, 0, 1, 0, \
+			0, 0, 0, 1)
+
+			var/matrix4/screen_transform = window_transform.multiply(ortho_transform)
+
+			for(var/vertex/v in vertices)
+				var/vector4/screen_pos = screen_transform.multiply(v.position)
+				draw_point(screen_pos.get_x(), screen_pos.get_y())
+
 		draw_point(x, y)
+			//does not account if another point with the same coordinate already exists
 			//new
 			var/obj/O = new
 			O.screen_loc = "1,1"
 			screen += O
 
 			O.transform = matrix(x, y, MATRIX_TRANSLATE)
+
+			src << "draw point at [x]:[y]"
 
