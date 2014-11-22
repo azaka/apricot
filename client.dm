@@ -82,3 +82,18 @@ client
 			pos2.print(1)
 
 			ASSERT(pos2.get_x() == 0 && pos2.get_y() == 1 && pos2.get_z() == 1)
+
+			//screen
+			//640x640
+			var/nx = 640
+			var/ny = 640
+
+			var/matrix4/screen_transform = new \
+			(nx / 2, 0, 0, (nx - 1) / 2, \
+			0, ny / 2, 0, (ny - 1) / 2, \
+			0, 0, 1, 0, \
+			0, 0, 0, 1)
+
+			var/vector4/screen_pos = screen_transform.multiply(pos2)
+
+			src << "screen coord: [screen_pos.get_x()]:[screen_pos.get_y()]"
