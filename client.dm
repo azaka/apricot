@@ -1,6 +1,8 @@
 client
 	var
 		matrix/transform
+		list/vertices
+		camera/camera
 
 	verb
 		new_matrix4x4()
@@ -106,8 +108,8 @@ client
 			src << "screen coord: [screen_pos.get_x()]:[screen_pos.get_y()]"
 			draw_point(screen_pos.get_x(), screen_pos.get_y())
 
-		draw_cube_with_view()
-			var/list/vertices = list()
+		new_cube()
+			vertices = list()
 
 			vertices += new /vertex(1, 1, -1)
 			vertices += new /vertex(-1, 1, -1)
@@ -119,8 +121,7 @@ client
 			vertices += new /vertex(1, -1, 1)
 			vertices += new /vertex(-1, -1, 1)
 
-			vertices += new /vertex(0, 0, 0)
-
+		draw_vertices_with_view()
 			project_vertices(vertices, 1)
 
 		draw_cube()
@@ -131,35 +132,83 @@ client
 			vertices += new /vertex(1, -1, -1)
 			vertices += new /vertex(-1, -1, -1)
 
-			vertices += new /vertex(1, 1, 1)
-			vertices += new /vertex(-1, 1, 1)
-			vertices += new /vertex(1, -1, 1)
-			vertices += new /vertex(-1, -1, 1)
+			vertices += new /vertex(1, 1, -3)
+			vertices += new /vertex(-1, 1, -3)
+			vertices += new /vertex(1, -1, -3)
+			vertices += new /vertex(-1, -1, -3)
 
 			vertices += new /vertex(0, 0, 0)
 
 			project_vertices(vertices)
 
+		clear_screen()
+			screen = null
+
+		set_eye_position(x as num, y as num, z as num)
+			camera.eye.set_x(x)
+			camera.eye.set_y(y)
+			camera.eye.set_z(z)
+
+			project_vertices(vertices, 1)
+
+
+		sidestep_left()
+			//gaze x up
+			var/vector3/left = camera.gaze.cross(camera.up)
+			left.normalize()
+
+			//step size
+			camera.eye = camera.eye.add(left)
+
+			project_vertices(vertices, 1)
+
+		sidestep_right()
+			var/vector3/right = camera.up.cross(camera.gaze)
+			right.normalize()
+
+			camera.eye = camera.eye.add(right)
+
+			project_vertices(vertices, 1)
+
 
 	proc
 		project_vertices(list/vertices, apply_view)
+			clear_screen()
+
 			var/matrix4/view_transform = null
 
 			if(apply_view)
 
-				//eye at origin
-				var/vector3/e = new	//origin
-				var/vector3/g = new(0, 0, 1)
-				var/vector3/t = new(0, 1, 0)
+				if(!camera)
+					camera = new
+				if(!camera.eye)
+					camera.eye = new
+				var/vector3/e = camera.eye
+				src << "eye:"
+				e.print()
+				if(!camera.gaze)
+					camera.gaze = new(0, 0, 1)
+				var/vector3/g = camera.gaze
+
+				if(!camera.up)
+					camera.up = new(0, 1, 0)
+
+				var/vector3/t = camera.up
 
 				//uvw
 				var/vector3/w = g.multiply(-1)
 				w.normalize()
+				src << "w-axis:"
+				w.print()
 
 				var/vector3/u = t.cross(w)
 				u.normalize()
+				src << "u-axis:"
+				u.print()
 
 				var/vector3/v = w.cross(u)
+				src << "v-axis:"
+				v.print()
 
 				//view
 				var/matrix4/view_translate = new \
@@ -220,6 +269,8 @@ client
 				var/vector4/screen_pos = screen_transform.multiply(v.position)
 				draw_point(screen_pos.get_x(), screen_pos.get_y())
 
+
+
 		draw_point(x, y)
 			//does not account if another point with the same coordinate already exists
 			//new
@@ -230,4 +281,7 @@ client
 			O.transform = matrix(x, y, MATRIX_TRANSLATE)
 
 			src << "draw point at [x]:[y]"
+
+
+
 

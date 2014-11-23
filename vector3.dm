@@ -17,9 +17,28 @@ vector3
 		get_z()
 			return dat[3][1]
 
-		multiply(x)
+		set_x(x)
+			dat[1][1] = x
+
+		set_y(y)
+			dat[2][1] = y
+
+		set_z(z)
+			dat[3][1] = z
+
+		add(vector3/v)
+			var/vector3/res = new
 			for(var/i = 1 to 3)
-				dat[i][1] *= x
+				res.dat[i][1] = dat[i][1] + v.dat[i][1]
+
+			return res
+
+		multiply(x)
+			var/vector3/res = new
+			for(var/i = 1 to 3)
+				res.dat[i][1] = dat[i][1] * x
+
+			return res
 
 		normalize()
 			var/magnitude = magnitude()
@@ -43,3 +62,8 @@ vector3
 			res.dat[3][1] = dat[1][1] * v.dat[2][1] - dat[2][1] * v.dat[1][1]
 
 			return res
+
+		print()
+			world << "\<[type]\>:\ref[src]"
+			world << "([get_x()], [get_y()], [get_z()])"
+
