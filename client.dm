@@ -233,6 +233,13 @@ client
 			var/n = -1
 			var/f = -3
 
+			//perspective
+			var/matrix4/perspective = new \
+			(n, 0, 0, 0, \
+			0, n, 0, 0, \
+			0, 0, n + f, -1 * f * n, \
+			0, 0, 1, 0)
+
 			//origin
 			var/matrix4/ortho_translate = new \
 			(1, 0, 0, (l + r) / -2, \
@@ -257,13 +264,7 @@ client
 			0, 0, 1, 0, \
 			0, 0, 0, 1)
 
-			var/matrix4/screen_transform = null
-
-			if(apply_view)
-				var/matrix4/view = ortho_transform.multiply(view_transform)
-				screen_transform = window_transform.multiply(view)
-			else
-				screen_transform = window_transform.multiply(ortho_transform)
+			var/matrix4/screen_transform = window_transform.multiply(ortho_transform.multiply(perspective.multiply(view_transform)))
 
 			for(var/vertex/v in vertices)
 				var/vector4/screen_pos = screen_transform.multiply(v.position)
