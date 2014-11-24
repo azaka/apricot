@@ -3,6 +3,7 @@ client
 		matrix/transform
 		list/vertices
 		camera/camera
+		is_moving
 
 	verb
 		new_matrix4x4()
@@ -110,36 +111,21 @@ client
 
 		new_cube()
 			vertices = list()
-
 			vertices += new /vertex(1, 1, -1)
 			vertices += new /vertex(-1, 1, -1)
-			vertices += new /vertex(1, -1, -1)
-			vertices += new /vertex(-1, -1, -1)
+			vertices += new /vertex(-1, 1, -1.1)
+			vertices += new /vertex(1, 1, -1.1)
+			/*vertices += new /vertex(-1, -1, -1)
 
-			vertices += new /vertex(1, 1, 1)
-			vertices += new /vertex(-1, 1, 1)
-			vertices += new /vertex(1, -1, 1)
-			vertices += new /vertex(-1, -1, 1)
+			vertices += new /vertex(1, 1, -1.1)
+			vertices += new /vertex(-1, 1, -1.1)
+			vertices += new /vertex(1, -1, -1.1)
+			vertices += new /vertex(-1, -1, -1.1)*/
+
+
 
 		draw_vertices_with_view()
 			project_vertices(vertices, 1)
-
-		draw_cube()
-			var/list/vertices = list()
-			//front
-			vertices += new /vertex(1, 1, -1)
-			vertices += new /vertex(-1, 1, -1)
-			vertices += new /vertex(1, -1, -1)
-			vertices += new /vertex(-1, -1, -1)
-
-			vertices += new /vertex(1, 1, -3)
-			vertices += new /vertex(-1, 1, -3)
-			vertices += new /vertex(1, -1, -3)
-			vertices += new /vertex(-1, -1, -3)
-
-			vertices += new /vertex(0, 0, 0)
-
-			project_vertices(vertices)
 
 		clear_screen()
 			screen = null
@@ -151,6 +137,13 @@ client
 
 			project_vertices(vertices, 1)
 
+		up()
+			camera.eye = camera.eye.add(camera.up)
+			project_vertices(vertices, 1)
+
+		down()
+			camera.eye = camera.eye.add(camera.up.multiply(-1))
+			project_vertices(vertices, 1)
 
 		sidestep_left()
 			//gaze x up
@@ -158,7 +151,7 @@ client
 			left.normalize()
 
 			//step size
-			camera.eye = camera.eye.add(left)
+			camera.eye = camera.eye.add(left.multiply(0.1))
 
 			project_vertices(vertices, 1)
 
@@ -166,8 +159,29 @@ client
 			var/vector3/right = camera.up.cross(camera.gaze)
 			right.normalize()
 
-			camera.eye = camera.eye.add(right)
+			camera.eye = camera.eye.add(right.multiply(0.1))
 
+			project_vertices(vertices, 1)
+
+		continuously_move_forward()
+			is_moving = 1
+			while(is_moving)
+				camera.eye = camera.eye.add(camera.gaze.multiply(-0.1))
+
+				project_vertices(vertices, 1)
+
+				sleep(10)
+
+		gaze_right()
+			var/x = camera.gaze.get_x() + 0.1
+			camera.gaze.set_x(x)
+			project_vertices(vertices, 1)
+
+		stop()
+			is_moving = 0
+
+		move_backward()
+			camera.eye = camera.eye.add(camera.gaze)
 			project_vertices(vertices, 1)
 
 
@@ -187,7 +201,7 @@ client
 				src << "eye:"
 				e.print()
 				if(!camera.gaze)
-					camera.gaze = new(0, 0, 1)
+					camera.gaze = new(0, 0, -1)
 				var/vector3/g = camera.gaze
 
 				if(!camera.up)
@@ -224,6 +238,8 @@ client
 				0, 0, 0, 1)
 
 				view_transform = view_scale.multiply(view_translate)
+				src << "view"
+				view_transform.print()
 
 			//orthographic box
 			var/l = -3
@@ -234,11 +250,19 @@ client
 			var/f = -3
 
 			//perspective
+			var/matrix4/perspective2 = new \
+			(1, 0, 0, 0, \
+			0, 1, 0, 0, \
+			0, 0, (n + f) / n, -f, \
+			0, 0, 1 / n, 0)
+
+
 			var/matrix4/perspective = new \
 			(n, 0, 0, 0, \
 			0, n, 0, 0, \
-			0, 0, n + f, -1 * f * n, \
+			0, 0, (n + f), -f * n, \
 			0, 0, 1, 0)
+
 
 			//origin
 			var/matrix4/ortho_translate = new \
@@ -264,15 +288,38 @@ client
 			0, 0, 1, 0, \
 			0, 0, 0, 1)
 
-			var/matrix4/screen_transform = window_transform.multiply(ortho_transform.multiply(perspective.multiply(view_transform)))
+			src << "screen"
+			//var/matrix4/screen_transform = window_transform.multiply(ortho_transform.multiply(perspective.multiply(view_transform)))
+			var/matrix4/screen_transform = window_transform.multiply(perspective.multiply(view_transform))
+			screen_transform.print()
+			var/matrix4/test = ortho_transform.multiply(perspective)
+			src << "composite"
+			test.print()
+			src << "projection"
+			var/matrix4/projection = new \
+			(2 * n / (r - l), 0, (l + r) / (l - r), 0, \
+			0, 2 * n / (t - b), (b + t) / (b - t), 0, \
+			0, 0, (f + n) / (n - f), 2 * f * n / (f - n),
+			0, 0, 1, 0)
+			projection.print()
+
+			ASSERT(test.equals(projection))
+			screen_transform = window_transform.multiply(projection.multiply(view_transform))
+			//screen_transform.print()
 
 			for(var/vertex/v in vertices)
 				var/vector4/screen_pos = screen_transform.multiply(v.position)
-				draw_point(screen_pos.get_x(), screen_pos.get_y())
+				var/vector4/persp_pos = projection.multiply(v.position)
+				persp_pos.print()
+				var/vector4/uvw = view_transform.multiply(v.position)
+				screen_pos.homogenize()
+
+				src << "xyz [v.position.get_x()], [v.position.get_y()], [v.position.get_z()] => uvw: [uvw.get_x()], [uvw.get_y()], [uvw.get_z()]"
+				draw_point(screen_pos.get_x(), screen_pos.get_y(), v.rgb)
 
 
 
-		draw_point(x, y)
+		draw_point(x, y, rgb)
 			//does not account if another point with the same coordinate already exists
 			//new
 			var/obj/O = new
@@ -280,6 +327,8 @@ client
 			screen += O
 
 			O.transform = matrix(x, y, MATRIX_TRANSLATE)
+			O.color = null
+			O.color = rgb
 
 			src << "draw point at [x]:[y]"
 

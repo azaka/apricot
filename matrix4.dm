@@ -36,6 +36,14 @@ matrix4
 
 				return res
 
+		equals(matrix4/m)
+			for(var/r = 1 to 4)
+				for(var/c = 1 to 4)
+					if(dat[r][c] != m.dat[r][c])
+						return 0
+
+			return 1
+
 		print()
 			world << "\<[type]\>:\ref[src]"
 			var/str = ""

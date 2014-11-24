@@ -21,6 +21,10 @@ vector4
 		get_z()
 			return dat[3][1]
 
+		homogenize()
+			for(var/r = 1 to 4)
+				dat[r][1] /= dat[4][1]
+
 		print(ignore_h = 0)
 			world << "\<[type]\>:\ref[src]"
 			var/str = ""
