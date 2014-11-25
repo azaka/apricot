@@ -4,6 +4,8 @@ client
 		list/vertices
 		camera/camera
 		is_moving
+		Canvas/canvas
+		obj/anchor_obj
 
 	verb
 		new_matrix4x4()
@@ -111,16 +113,35 @@ client
 
 		new_cube()
 			vertices = list()
-			vertices += new /vertex(1, 1, -1)
+			//front plane
 			vertices += new /vertex(-1, 1, -1)
-			vertices += new /vertex(-1, 1, -1.1)
-			vertices += new /vertex(1, 1, -1.1)
-			/*vertices += new /vertex(-1, -1, -1)
+			vertices += new /vertex(1, 1, -1)
+			vertices += new /vertex(1, 1, -1)
+			vertices += new /vertex(1, -1, -1)
+			vertices += new /vertex(1, -1, -1)
+			vertices += new /vertex(-1, -1, -1)
+			vertices += new /vertex(-1, -1, -1)
+			vertices += new /vertex(-1, 1, -1)
 
-			vertices += new /vertex(1, 1, -1.1)
-			vertices += new /vertex(-1, 1, -1.1)
-			vertices += new /vertex(1, -1, -1.1)
-			vertices += new /vertex(-1, -1, -1.1)*/
+			//side
+			vertices += new /vertex(-1, 1, -1)
+			vertices += new /vertex(-1, 1, -3)
+			vertices += new /vertex(1, 1, -1)
+			vertices += new /vertex(1, 1, -3)
+			vertices += new /vertex(1, -1, -1)
+			vertices += new /vertex(1, -1, -3)
+			vertices += new /vertex(-1, -1, -1)
+			vertices += new /vertex(-1, -1, -3)
+
+			//back plane
+			vertices += new /vertex(-1, 1, -3)
+			vertices += new /vertex(1, 1, -3)
+			vertices += new /vertex(1, 1, -3)
+			vertices += new /vertex(1, -1, -3)
+			vertices += new /vertex(1, -1, -3)
+			vertices += new /vertex(-1, -1, -3)
+			vertices += new /vertex(-1, -1, -3)
+			vertices += new /vertex(-1, 1, -3)
 
 
 
@@ -129,6 +150,8 @@ client
 
 		clear_screen()
 			screen = null
+			if(canvas)
+				canvas.clear()
 
 		set_eye_position(x as num, y as num, z as num)
 			camera.eye.set_x(x)
@@ -317,6 +340,17 @@ client
 				src << "xyz [v.position.get_x()], [v.position.get_y()], [v.position.get_z()] => uvw: [uvw.get_x()], [uvw.get_y()], [uvw.get_z()]"
 				draw_point(screen_pos.get_x(), screen_pos.get_y(), v.rgb)
 
+			for(var/i = 1; i <= vertices.len; i += 2)
+				if(i + 1 > vertices.len)
+					return
+				var/vertex/v1 = vertices[i]
+				var/vector4/p1 = screen_transform.multiply(v1.position)
+				var/vertex/v2 = vertices[i + 1]
+				var/vector4/p2 = screen_transform.multiply(v2.position)
+				p1.homogenize()
+				p2.homogenize()
+				draw_line(p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y())
+
 
 
 		draw_point(x, y, rgb)
@@ -331,6 +365,18 @@ client
 			O.color = rgb
 
 			src << "draw point at [x]:[y]"
+
+		draw_line(x0, y0, x1, y1)
+			if(!anchor_obj)
+				anchor_obj = new(locate(1, 1, 1))
+			if(!canvas)
+				canvas = new(anchor_obj, 320, 320, rgb(0, 0, 0))
+
+			canvas.drawLine(x0, y0, x1, y1, rgb(255, 255, 255), 1)
+			canvas.update()
+
+			src << "draw line: ([x0],[y0]) - ([x1],[y1])"
+
 
 
 
