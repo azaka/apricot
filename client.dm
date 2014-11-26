@@ -1,3 +1,5 @@
+world
+
 client
 	var
 		matrix/transform
@@ -6,6 +8,7 @@ client
 		is_moving
 		Canvas/canvas
 		obj/anchor_obj
+		angle = 0
 
 	verb
 		new_matrix4x4()
@@ -143,6 +146,9 @@ client
 			vertices += new /vertex(-1, -1, -3)
 			vertices += new /vertex(-1, 1, -3)
 
+			//
+			vertices += new /vertex(0, 0, 0)
+			vertices += new /vertex(0, 2, 0)
 
 
 		draw_vertices_with_view()
@@ -207,6 +213,34 @@ client
 			camera.eye = camera.eye.add(camera.gaze)
 			project_vertices(vertices, 1)
 
+		move_cube_about_origin()
+
+			if(!vertices || !vertices.len || is_moving)
+				return
+
+			//reposition camera
+			if(!camera)
+				camera = new
+
+			camera.eye = new /vector3(0, 3, 4)
+			camera.gaze = camera.eye.multiply(-1)
+
+			is_moving = 1
+			angle = 5
+			while(is_moving)
+				var/matrix4/rotate_transform = new \
+				(cos(angle), 0, sin(angle), 0, \
+				0, 1, 0, 0, \
+				-1 * sin(angle), 0, cos(angle), 0, \
+				0, 0, 0, 1)
+
+				for(var/vertex/v in vertices)
+					v.position = rotate_transform.multiply(v.position)
+
+				project_vertices(vertices, 1)
+				//angle += 0.05
+				sleep(world.tick_lag)
+
 
 	proc
 		project_vertices(list/vertices, apply_view)
@@ -221,8 +255,8 @@ client
 				if(!camera.eye)
 					camera.eye = new
 				var/vector3/e = camera.eye
-				src << "eye:"
-				e.print()
+				//src << "eye:"
+				//e.print()
 				if(!camera.gaze)
 					camera.gaze = new(0, 0, -1)
 				var/vector3/g = camera.gaze
@@ -235,17 +269,17 @@ client
 				//uvw
 				var/vector3/w = g.multiply(-1)
 				w.normalize()
-				src << "w-axis:"
-				w.print()
+				//src << "w-axis:"
+				//w.print()
 
 				var/vector3/u = t.cross(w)
 				u.normalize()
-				src << "u-axis:"
-				u.print()
+				//src << "u-axis:"
+				//u.print()
 
 				var/vector3/v = w.cross(u)
-				src << "v-axis:"
-				v.print()
+				//src << "v-axis:"
+				//v.print()
 
 				//view
 				var/matrix4/view_translate = new \
@@ -261,8 +295,8 @@ client
 				0, 0, 0, 1)
 
 				view_transform = view_scale.multiply(view_translate)
-				src << "view"
-				view_transform.print()
+				//src << "view"
+				//view_transform.print()
 
 			//orthographic box
 			var/l = -3
@@ -311,20 +345,20 @@ client
 			0, 0, 1, 0, \
 			0, 0, 0, 1)
 
-			src << "screen"
+			//src << "screen"
 			//var/matrix4/screen_transform = window_transform.multiply(ortho_transform.multiply(perspective.multiply(view_transform)))
 			var/matrix4/screen_transform = window_transform.multiply(perspective.multiply(view_transform))
-			screen_transform.print()
+			//screen_transform.print()
 			var/matrix4/test = ortho_transform.multiply(perspective)
-			src << "composite"
-			test.print()
-			src << "projection"
+			//src << "composite"
+			//test.print()
+			//src << "projection"
 			var/matrix4/projection = new \
 			(2 * n / (r - l), 0, (l + r) / (l - r), 0, \
 			0, 2 * n / (t - b), (b + t) / (b - t), 0, \
 			0, 0, (f + n) / (n - f), 2 * f * n / (f - n),
 			0, 0, 1, 0)
-			projection.print()
+			//projection.print()
 
 			ASSERT(test.equals(projection))
 			screen_transform = window_transform.multiply(projection.multiply(view_transform))
@@ -333,11 +367,11 @@ client
 			for(var/vertex/v in vertices)
 				var/vector4/screen_pos = screen_transform.multiply(v.position)
 				var/vector4/persp_pos = projection.multiply(v.position)
-				persp_pos.print()
+				//persp_pos.print()
 				var/vector4/uvw = view_transform.multiply(v.position)
 				screen_pos.homogenize()
 
-				src << "xyz [v.position.get_x()], [v.position.get_y()], [v.position.get_z()] => uvw: [uvw.get_x()], [uvw.get_y()], [uvw.get_z()]"
+				//src << "xyz [v.position.get_x()], [v.position.get_y()], [v.position.get_z()] => uvw: [uvw.get_x()], [uvw.get_y()], [uvw.get_z()]"
 				draw_point(screen_pos.get_x(), screen_pos.get_y(), v.rgb)
 
 			for(var/i = 1; i <= vertices.len; i += 2)
@@ -364,7 +398,7 @@ client
 			O.color = null
 			O.color = rgb
 
-			src << "draw point at [x]:[y]"
+			//src << "draw point at [x]:[y]"
 
 		draw_line(x0, y0, x1, y1)
 			if(!anchor_obj)
@@ -375,7 +409,7 @@ client
 			canvas.drawLine(x0, y0, x1, y1, rgb(255, 255, 255), 1)
 			canvas.update()
 
-			src << "draw line: ([x0],[y0]) - ([x1],[y1])"
+			//src << "draw line: ([x0],[y0]) - ([x1],[y1])"
 
 
 
