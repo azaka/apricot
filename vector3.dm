@@ -3,9 +3,18 @@ vector3
 		list/dat[3][1]
 
 	New(x = 0, y = 0, z = 0)
-		dat[1][1] = x
-		dat[2][1] = y
-		dat[3][1] = z
+		if(istype(x, /vector4))
+			var/vector4/v = x
+			dat[1][1] = v.get_x()
+			dat[2][1] = v.get_y()
+			dat[3][1] = v.get_z()
+			world << "created vector3 from vector4"
+			v.print()
+		else
+
+			dat[1][1] = x
+			dat[2][1] = y
+			dat[3][1] = z
 
 	proc
 		get_x()
@@ -42,6 +51,11 @@ vector3
 
 		normalize()
 			var/magnitude = magnitude()
+
+			if(!magnitude)
+				world << "cannot normalize vector"
+				print()
+				return
 
 			for(var/i = 1 to 3)
 				dat[i][1] = dat[i][1] / magnitude

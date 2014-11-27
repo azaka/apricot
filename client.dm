@@ -150,6 +150,67 @@ client
 			vertices += new /vertex(0, 0, 0)
 			vertices += new /vertex(0, 2, 0)
 
+		test_add_cube(x as num, y as num, z as num)
+			var/vector4/center = new(x, y, z, 1)
+
+			if(!camera)
+				camera = new
+
+			camera.eye = new /vector3(0, 3, 4)
+			camera.gaze = camera.eye.multiply(-1)
+
+
+			var/list/vertices = add_cube(center, 1)
+			src << "[vertices.len] vertices added"
+			if(!src.vertices)
+				src.vertices = list()
+			src.vertices += vertices
+
+		create_spinning_cube(x as num, y as num, z as num)
+			var/vector4/center = new(x, y, z, 1)
+
+			if(!camera)
+				camera = new
+
+			camera.eye = new /vector3(0, 3, 4)
+			camera.gaze = camera.eye.multiply(-1)
+
+			var/list/vertices = add_cube(center)
+
+			if(!src.vertices)
+				src.vertices = list()
+			src.vertices += vertices
+			src << "member vertices length=[src.vertices.len]"
+
+			var/matrix4/center_transform = new \
+			(1, 0, 0, x, \
+			0, 1, 0, y, \
+			0, 0, 1, z, \
+			0, 0, 0, 1)
+
+			var/matrix4/origin_transform = new \
+			(1, 0, 0, -1 * x, \
+			0, 1, 0, -1 * y, \
+			0, 0, 1, -1 * z, \
+			0, 0, 0, 1)
+			//make angle modifiable
+			var/angle = 5
+			var/matrix4/rotate_transform = new \
+			(cos(angle), 0, sin(angle), 0, \
+			0, 1, 0, 0, \
+			-1 * sin(angle), 0, cos(angle), 0, \
+			0, 0, 0, 1)
+
+			var/matrix4/axis_spin = center_transform.multiply(rotate_transform.multiply(origin_transform))
+
+			is_moving = 1
+			while(is_moving)
+				//local cube vertices only
+				for(var/vertex/v in vertices)
+					v.position = axis_spin.multiply(v.position)
+
+				project_vertices(vertices, 1)
+				sleep(world.tick_lag)
 
 		draw_vertices_with_view()
 			project_vertices(vertices, 1)
@@ -243,6 +304,54 @@ client
 
 
 	proc
+		add_cube(vector4/center, project)
+			var/list/vertices = list()
+
+			var/matrix4/offset = new \
+			(1, 0, 0, center.get_x(), \
+			0, 1, 0, center.get_y(), \
+			0, 0, 1, center.get_z() + 2, \
+			0, 0, 0, 1)
+
+			//front plane
+			vertices += new /vertex(-1, 1, -1)
+			vertices += new /vertex(1, 1, -1)
+			vertices += new /vertex(1, 1, -1)
+			vertices += new /vertex(1, -1, -1)
+			vertices += new /vertex(1, -1, -1)
+			vertices += new /vertex(-1, -1, -1)
+			vertices += new /vertex(-1, -1, -1)
+			vertices += new /vertex(-1, 1, -1)
+
+			//side
+			vertices += new /vertex(-1, 1, -1)
+			vertices += new /vertex(-1, 1, -3)
+			vertices += new /vertex(1, 1, -1)
+			vertices += new /vertex(1, 1, -3)
+			vertices += new /vertex(1, -1, -1)
+			vertices += new /vertex(1, -1, -3)
+			vertices += new /vertex(-1, -1, -1)
+			vertices += new /vertex(-1, -1, -3)
+
+			//back plane
+			vertices += new /vertex(-1, 1, -3)
+			vertices += new /vertex(1, 1, -3)
+			vertices += new /vertex(1, 1, -3)
+			vertices += new /vertex(1, -1, -3)
+			vertices += new /vertex(1, -1, -3)
+			vertices += new /vertex(-1, -1, -3)
+			vertices += new /vertex(-1, -1, -3)
+			vertices += new /vertex(-1, 1, -3)
+
+			//offset
+			for(var/vertex/v in vertices)
+				v.position = offset.multiply(v.position)
+
+			if(project)
+				project_vertices(vertices, 1)
+
+			return vertices
+
 		project_vertices(list/vertices, apply_view)
 			clear_screen()
 

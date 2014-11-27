@@ -21,7 +21,21 @@ vector4
 		get_z()
 			return dat[3][1]
 
+		multiply(x)
+			var/vector4/res = new
+			for(var/i = 1 to 3)
+				res.dat[i][1] = dat[i][1] * x
+			res.dat[4][1] = 1
+			return res
+
 		homogenize()
+			if(dat[4][1] == 0)
+				world << "cannot homogenize vector"
+				print()
+				usr.client.is_moving = 0
+				//CRASH("cannot homogenize vector")
+				return
+
 			for(var/r = 1 to 4)
 				dat[r][1] /= dat[4][1]
 
