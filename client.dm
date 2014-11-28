@@ -168,6 +168,10 @@ client
 
 		create_spinning_cube(x as num, y as num, z as num)
 			var/vector4/center = new(x, y, z, 1)
+			var/list/axis_options = list("y-axis", "x-axis", "z-axis")
+			var/axis = input("Please choose a rotation axis") as null|anything in axis_options
+			if(!axis)
+				return
 
 			if(!camera)
 				camera = new
@@ -195,11 +199,27 @@ client
 			0, 0, 0, 1)
 			//make angle modifiable
 			var/angle = 5
-			var/matrix4/rotate_transform = new \
-			(cos(angle), 0, sin(angle), 0, \
-			0, 1, 0, 0, \
-			-1 * sin(angle), 0, cos(angle), 0, \
-			0, 0, 0, 1)
+
+			var/matrix4/rotate_transform = null
+			if(axis == axis_options[1])
+				rotate_transform = new \
+				(cos(angle), 0, sin(angle), 0, \
+				0, 1, 0, 0, \
+				-1 * sin(angle), 0, cos(angle), 0, \
+				0, 0, 0, 1)
+			else if(axis == axis_options[2])
+				//x
+				rotate_transform = new \
+				(1, 0, 0, 0, \
+				0, cos(angle), -sin(angle), 0,
+				0, sin(angle), cos(angle),0,
+				0, 0, 0, 1)
+			else if(axis == axis_options[3])
+				rotate_transform = new \
+				(cos(angle), -sin(angle), 0, 0, \
+				sin(angle), cos(angle), 0, 0, \
+				0, 0, 1, 0, \
+				0, 0, 0, 1)
 
 			var/matrix4/axis_spin = center_transform.multiply(rotate_transform.multiply(origin_transform))
 
