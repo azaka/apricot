@@ -1,13 +1,13 @@
-world
-
 client
 	var
 		matrix/transform
 		list/vertices
 		camera/camera
 		is_moving
+		#ifdef HAS_CANVAS
 		Canvas/canvas
 		obj/anchor_obj
+		#endif
 		angle = 0
 
 	verb
@@ -215,6 +215,7 @@ client
 				0, sin(angle), cos(angle),0,
 				0, 0, 0, 1)
 			else if(axis == axis_options[3])
+				//z-axis
 				rotate_transform = new \
 				(cos(angle), -sin(angle), 0, 0, \
 				sin(angle), cos(angle), 0, 0, \
@@ -237,8 +238,10 @@ client
 
 		clear_screen()
 			screen = null
+			#ifdef HAS_CANVAS
 			if(canvas)
 				canvas.clear()
+			#endif
 
 		set_eye_position(x as num, y as num, z as num)
 			camera.eye.set_x(x)
@@ -321,6 +324,27 @@ client
 				project_vertices(vertices, 1)
 				//angle += 0.05
 				sleep(world.tick_lag)
+
+		draw_triangle(xa as num, ya as num, xb as num, yb as num, xc as num, yc as num)
+
+			for(var/x = 1 to world.maxx * world.icon_size)
+				for(var/y = 1 to world.maxy * world.icon_size)
+					var/gamma = ((ya - yb) * x + (xb - xa) * y + xa * yb - xb * ya) \
+								/\
+								((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
+
+					var/beta = ((ya - yc) * x + (xc - xa) * y + xa * yc - xc * ya) \
+								/\
+								((ya - yc) * xb + (xc - xa) * yb + xa * yc - xc * ya)
+
+					var/alpha = 1 - beta - gamma
+
+					if((alpha in 0 to 1) && (beta in 0 to 1) && (gamma in 0 to 1))
+						draw_point(x, y)
+						#ifndef HAS_CANVAS
+						sleep(1)
+						#endif
+
 
 
 	proc
@@ -517,6 +541,16 @@ client
 
 
 		draw_point(x, y, rgb)
+			#ifdef HAS_CANVAS
+
+			if(!anchor_obj)
+				anchor_obj = new(locate(1, 1, 1))
+			if(!canvas)
+				canvas = new(anchor_obj, 320, 320, rgb(0, 0, 0))
+			canvas.drawPixel(x, y, rgb)
+			canvas.update()
+
+			#else
 			//does not account if another point with the same coordinate already exists
 			//new
 			var/obj/O = new
@@ -527,9 +561,12 @@ client
 			O.color = null
 			O.color = rgb
 
+			#endif
+
 			//src << "draw point at [x]:[y]"
 
 		draw_line(x0, y0, x1, y1)
+			#ifdef HAS_CANVAS
 			if(!anchor_obj)
 				anchor_obj = new(locate(1, 1, 1))
 			if(!canvas)
@@ -537,6 +574,7 @@ client
 
 			canvas.drawLine(x0, y0, x1, y1, rgb(255, 255, 255), 1)
 			canvas.update()
+			#endif
 
 			//src << "draw line: ([x0],[y0]) - ([x1],[y1])"
 
