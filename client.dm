@@ -340,10 +340,13 @@ client
 					var/alpha = 1 - beta - gamma
 
 					if((alpha in 0 to 1) && (beta in 0 to 1) && (gamma in 0 to 1))
-						draw_point(x, y)
+						//each point is either fully red, green or blue respectively
+						draw_point(x, y, rgb(alpha * 255, beta * 255, gamma * 255))
 						#ifndef HAS_CANVAS
 						sleep(1)
 						#endif
+
+			update_screen()
 
 
 
@@ -538,17 +541,22 @@ client
 				p2.homogenize()
 				draw_line(p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y())
 
+			update_screen()
 
+		update_screen()
+			#ifdef HAS_CANVAS
+			canvas.update()
+			#endif
 
-		draw_point(x, y, rgb)
+		draw_point(x, y, rgb, instant_update)
 			#ifdef HAS_CANVAS
 
+			rgb = rgb || rgb(255, 255, 255)
 			if(!anchor_obj)
 				anchor_obj = new(locate(1, 1, 1))
 			if(!canvas)
 				canvas = new(anchor_obj, 320, 320, rgb(0, 0, 0))
 			canvas.drawPixel(x, y, rgb)
-			canvas.update()
 
 			#else
 			//does not account if another point with the same coordinate already exists
@@ -563,9 +571,12 @@ client
 
 			#endif
 
+			if(instant_update)
+				update_screen()
+
 			//src << "draw point at [x]:[y]"
 
-		draw_line(x0, y0, x1, y1)
+		draw_line(x0, y0, x1, y1, instant_update)
 			#ifdef HAS_CANVAS
 			if(!anchor_obj)
 				anchor_obj = new(locate(1, 1, 1))
@@ -573,8 +584,10 @@ client
 				canvas = new(anchor_obj, 320, 320, rgb(0, 0, 0))
 
 			canvas.drawLine(x0, y0, x1, y1, rgb(255, 255, 255), 1)
-			canvas.update()
 			#endif
+
+			if(instant_update)
+				update_screen()
 
 			//src << "draw line: ([x0],[y0]) - ([x1],[y1])"
 
