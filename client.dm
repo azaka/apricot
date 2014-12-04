@@ -9,6 +9,7 @@ client
 		obj/anchor_obj
 		#endif
 		angle = 0
+		list/z_buffer[world.icon_size * world.maxx][world.icon_size * world.maxy]
 
 	verb
 		new_matrix4x4()
@@ -326,6 +327,7 @@ client
 				sleep(world.tick_lag)
 
 		draw_triangle(xa as num, ya as num, xb as num, yb as num, xc as num, yc as num)
+			var/z = 1
 
 			for(var/x = 1 to world.maxx * world.icon_size)
 				for(var/y = 1 to world.maxy * world.icon_size)
@@ -341,16 +343,25 @@ client
 
 					if((alpha in 0 to 1) && (beta in 0 to 1) && (gamma in 0 to 1))
 						//each point is either fully red, green or blue respectively
-						draw_point(x, y, rgb(alpha * 255, beta * 255, gamma * 255))
-						#ifndef HAS_CANVAS
-						sleep(1)
-						#endif
+
+						if(!z_buffer[x][y] || z >= z_buffer[x][y])
+							z_buffer[x][y] = z
+							//set pixel
+							draw_point(x, y, rgb(alpha * 255, beta * 255, gamma * 255))
+							#ifndef HAS_CANVAS
+							sleep(1)
+							#endif
 
 			update_screen()
 
 
 
 	proc
+		clear_z_buffer()
+			for(var/x = 1 to world.icon_size * world.maxx)
+				for(var/y = 1 to world.icon_size * world.maxy)
+					z_buffer[x][y] = null
+
 		add_cube(vector4/center, project)
 			var/list/vertices = list()
 
@@ -544,6 +555,7 @@ client
 			update_screen()
 
 		update_screen()
+			clear_z_buffer()
 			#ifdef HAS_CANVAS
 			canvas.update()
 			#endif
