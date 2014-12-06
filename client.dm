@@ -12,6 +12,32 @@ client
 		list/z_buffer[world.icon_size * world.maxx][world.icon_size * world.maxy]
 
 	verb
+		new_pyramid()
+			vertices = list()
+
+			//red front
+			vertices += new /vertex(0, 1, 0, "#f00")
+			vertices += new /vertex(-1, 0, 1, "#f00")
+			vertices += new /vertex(1, 0, 1, "#f00")
+
+			//right green
+			vertices += new /vertex(0, 1, 0, "#0f0")
+			vertices += new /vertex(1, 0, 1, "#0f0")
+			vertices += new /vertex(0, 0, -1, "#0f0")
+
+			//left blue
+			vertices += new /vertex(0, 1, 0, "#00f")
+			vertices += new /vertex(-1, 0, 1, "#00f")
+			vertices += new /vertex(0, 0, -1, "#00f")
+
+			//white base
+			vertices += new /vertex(-1, 0, 1, "#fff")
+			vertices += new /vertex(1, 0, 1, "#fff")
+			vertices += new /vertex(0, 0, -1, "#fff")
+
+			project_vertices(vertices, 1, 1)
+
+
 		new_matrix4x4()
 			var/matrix4/mat = new \
 			(1, 2, 3, 4, \
@@ -326,7 +352,33 @@ client
 				//angle += 0.05
 				sleep(world.tick_lag)
 
-		draw_triangle(xa as num, ya as num, xb as num, yb as num, xc as num, yc as num)
+		look_from_right_side()
+			if(!camera)
+				return
+
+			camera.eye = new(2, 0, 0)
+			camera.gaze = new(-1, 0, 0)
+
+			project_vertices(vertices, 1, 1)
+
+		look_from_an_angle()
+			if(!camera)
+				return
+
+			camera.eye = camera.eye.add(new /vector3(0, 2, 0))
+			camera.gaze = camera.eye.multiply(-1)
+
+			project_vertices(vertices, 1, 1)
+
+		look_closer()
+			if(!camera)
+				return
+
+			camera.eye = camera.eye.add(camera.gaze.multiply(-0.1))
+
+			project_vertices(vertices, 1, 1)
+
+		draw_triangle2(xa as num, ya as num, xb as num, yb as num, xc as num, yc as num)
 			var/z = 1
 
 			for(var/x = 1 to world.maxx * world.icon_size)
@@ -355,8 +407,49 @@ client
 			update_screen()
 
 
-
 	proc
+		draw_triangle(xa, ya, za, vertex/va, xb, yb, zb, vertex/vb, xc, yc, zc, vertex/vc)
+			//should have at least 1 area
+			if(round(abs((xa * yb + xb * yc + xc * ya - xa * yc - xb * ya - xc * yb) * 0.5)))
+				src << "area: [round((xa * yb + xb * yc + xc * ya - xa * yc - xb * ya - xc * yb) * 0.5)]"
+
+				var/list/va_rgb = ReadRGB(va.rgb || "#fff")
+				var/list/vb_rgb = ReadRGB(vb.rgb || "#fff")
+				var/list/vc_rgb = ReadRGB(vc.rgb || "#fff")
+
+				src << "vertex color: [va.rgb], [vb.rgb], [vc.rgb]"
+
+				ASSERT((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
+
+				for(var/x = 1 to world.maxx * world.icon_size)
+					for(var/y = 1 to world.maxy * world.icon_size)
+						var/gamma = ((ya - yb) * x + (xb - xa) * y + xa * yb - xb * ya) \
+									/\
+									((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
+
+						var/beta = ((ya - yc) * x + (xc - xa) * y + xa * yc - xc * ya) \
+									/\
+									((ya - yc) * xb + (xc - xa) * yb + xa * yc - xc * ya)
+
+						var/alpha = 1 - beta - gamma
+
+						if((alpha in 0 to 1) && (beta in 0 to 1) && (gamma in 0 to 1))
+							var/z = alpha * za + beta * zb + gamma * zc
+
+							if(!z_buffer[x][y] || z >= z_buffer[x][y])
+								z_buffer[x][y] = z
+
+								var/rr = alpha * va_rgb[1] + beta * vb_rgb[1] + gamma * vc_rgb[1]
+								var/gg = alpha * va_rgb[2] + beta * vb_rgb[2] + gamma * vc_rgb[2]
+								var/bb = alpha * va_rgb[3] + beta * vb_rgb[3] + gamma * vc_rgb[3]
+
+								//set pixel
+								draw_point(x, y, rgb(rr, gg, bb))
+								#ifndef HAS_CANVAS
+								sleep(1)
+								#endif
+
+
 		clear_z_buffer()
 			for(var/x = 1 to world.icon_size * world.maxx)
 				for(var/y = 1 to world.icon_size * world.maxy)
@@ -410,7 +503,7 @@ client
 
 			return vertices
 
-		project_vertices(list/vertices, apply_view)
+		project_vertices(list/vertices, apply_view, depth_test)
 			clear_screen()
 
 			var/matrix4/view_transform = null
@@ -420,7 +513,7 @@ client
 				if(!camera)
 					camera = new
 				if(!camera.eye)
-					camera.eye = new
+					camera.eye = new(0, 0, 2)
 				var/vector3/e = camera.eye
 				//src << "eye:"
 				//e.print()
@@ -531,26 +624,48 @@ client
 			screen_transform = window_transform.multiply(projection.multiply(view_transform))
 			//screen_transform.print()
 
-			for(var/vertex/v in vertices)
-				var/vector4/screen_pos = screen_transform.multiply(v.position)
-				var/vector4/persp_pos = projection.multiply(v.position)
-				//persp_pos.print()
-				var/vector4/uvw = view_transform.multiply(v.position)
-				screen_pos.homogenize()
+			if(depth_test)
+				for(var/i = 1; i <= vertices.len; i += 3)
+					if(i + 2 > vertices.len)
+						return
+					var/vertex/v1 = vertices[i]
+					var/vector4/p1 = screen_transform.multiply(v1.position)
+					var/vertex/v2 = vertices[i + 1]
+					var/vector4/p2 = screen_transform.multiply(v2.position)
+					var/vertex/v3 = vertices[i + 2]
+					var/vector4/p3 = screen_transform.multiply(v3.position)
 
-				//src << "xyz [v.position.get_x()], [v.position.get_y()], [v.position.get_z()] => uvw: [uvw.get_x()], [uvw.get_y()], [uvw.get_z()]"
-				draw_point(screen_pos.get_x(), screen_pos.get_y(), v.rgb)
+					p1.homogenize()
+					p2.homogenize()
+					p3.homogenize()
 
-			for(var/i = 1; i <= vertices.len; i += 2)
-				if(i + 1 > vertices.len)
-					return
-				var/vertex/v1 = vertices[i]
-				var/vector4/p1 = screen_transform.multiply(v1.position)
-				var/vertex/v2 = vertices[i + 1]
-				var/vector4/p2 = screen_transform.multiply(v2.position)
-				p1.homogenize()
-				p2.homogenize()
-				draw_line(p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y())
+					draw_triangle(
+					p1.get_x(), p1.get_y(), p1.get_z(), v1, \
+					p2.get_x(), p2.get_y(), p2.get_z(), v2, \
+					p3.get_x(), p3.get_y(), p3.get_z(), v3, \
+					)
+
+					src << "draw triangle ([p1.get_x()],[p1.get_y()]) ([p2.get_x()],[p2.get_y()]) ([p3.get_x()],[p3.get_y()])"
+
+			else
+
+				for(var/vertex/v in vertices)
+					var/vector4/screen_pos = screen_transform.multiply(v.position)
+					screen_pos.homogenize()
+
+					//src << "xyz [v.position.get_x()], [v.position.get_y()], [v.position.get_z()] => uvw: [uvw.get_x()], [uvw.get_y()], [uvw.get_z()]"
+					draw_point(screen_pos.get_x(), screen_pos.get_y(), v.rgb)
+
+				for(var/i = 1; i <= vertices.len; i += 2)
+					if(i + 1 > vertices.len)
+						return
+					var/vertex/v1 = vertices[i]
+					var/vector4/p1 = screen_transform.multiply(v1.position)
+					var/vertex/v2 = vertices[i + 1]
+					var/vector4/p2 = screen_transform.multiply(v2.position)
+					p1.homogenize()
+					p2.homogenize()
+					draw_line(p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y())
 
 			update_screen()
 

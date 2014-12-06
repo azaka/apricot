@@ -13,6 +13,7 @@
 // END_PREFERENCES
 
 // BEGIN_INCLUDE
+#include <lummoxjr\iconprocs\IconProcs.dme>
 #include <koil\canvas\Canvas.dme>
 #include "_defines.dm"
 #include "camera.dm"

@@ -5,10 +5,13 @@ vertex
 		matrix/transform
 		rgb
 
-	New(x = 0, y = 0, z = -1)
+	New(x = 0, y = 0, z = -1, rgb)
 		position = new(x, y, z, 1)
-		rgb = rgb(rand(255), rand(255), rand(255))
-		rgb = null
+		src.rgb = rgb
+
+	proc
+		get_color()
+			return rgb
 
 obj
 	icon = 'icon.dmi'
