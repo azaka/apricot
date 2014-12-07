@@ -4,14 +4,16 @@ vertex
 		obj/pixel
 		matrix/transform
 		rgb
+		material/material
+		list/tex_coord
 
-	New(x = 0, y = 0, z = -1, rgb)
+	New(x = 0, y = 0, z = -1)
 		position = new(x, y, z, 1)
-		src.rgb = rgb
-
-	proc
-		get_color()
-			return rgb
+		if(args.len == 4 && istext(args[4]))
+			src.rgb = args[4]
+		else if(args.len == 6 && istype(args[4], /material))
+			material = args[4]
+			tex_coord = list(args[5], args[6])
 
 obj
 	icon = 'icon.dmi'

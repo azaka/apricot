@@ -37,6 +37,33 @@ client
 
 			project_vertices(vertices, 1, 1)
 
+		new_textured_pyramid()
+			vertices = list()
+
+			var/material/m = new(icon('texture.dmi'))
+
+			//red front
+			vertices += new /vertex(0, 1, 0, m, 0, 0)
+			vertices += new /vertex(-1, 0, 1, m, 1, 0)
+			vertices += new /vertex(1, 0, 1, m, 0, 1)
+
+			//right green
+			vertices += new /vertex(0, 1, 0, m, 0, 0)
+			vertices += new /vertex(1, 0, 1, m, 1, 0)
+			vertices += new /vertex(0, 0, -1, m, 0, 1)
+
+			//left blue
+			vertices += new /vertex(0, 1, 0, m, 0, 0)
+			vertices += new /vertex(-1, 0, 1, m, 1, 0)
+			vertices += new /vertex(0, 0, -1, m, 0, 1)
+
+			//white base
+			vertices += new /vertex(-1, 0, 1, m, 0, 0)
+			vertices += new /vertex(1, 0, 1, m, 1, 0)
+			vertices += new /vertex(0, 0, -1, m, 0, 1)
+
+			project_vertices(vertices, 1, 1)
+
 
 		new_matrix4x4()
 			var/matrix4/mat = new \
@@ -439,12 +466,24 @@ client
 							if(!z_buffer[x][y] || z >= z_buffer[x][y])
 								z_buffer[x][y] = z
 
-								var/rr = alpha * va_rgb[1] + beta * vb_rgb[1] + gamma * vc_rgb[1]
-								var/gg = alpha * va_rgb[2] + beta * vb_rgb[2] + gamma * vc_rgb[2]
-								var/bb = alpha * va_rgb[3] + beta * vb_rgb[3] + gamma * vc_rgb[3]
+								var/rgb
+								if(va.material)
+									var/u = alpha * va.tex_coord[1] + beta * vb.tex_coord[1] + gamma * vc.tex_coord[1]
+									var/v = alpha * va.tex_coord[2] + beta * vb.tex_coord[2] + gamma * vc.tex_coord[2]
+
+									ASSERT(u in 0 to 1 && v in 0 to 1)
+
+									rgb = va.material.tex.GetPixel(va.material.tex.Width() * u, va.material.tex.Height() * v)
+
+								else
+									var/rr = alpha * va_rgb[1] + beta * vb_rgb[1] + gamma * vc_rgb[1]
+									var/gg = alpha * va_rgb[2] + beta * vb_rgb[2] + gamma * vc_rgb[2]
+									var/bb = alpha * va_rgb[3] + beta * vb_rgb[3] + gamma * vc_rgb[3]
+
+									rgb = rgb(rr, gg, bb)
 
 								//set pixel
-								draw_point(x, y, rgb(rr, gg, bb))
+								draw_point(x, y, rgb)
 								#ifndef HAS_CANVAS
 								sleep(1)
 								#endif
