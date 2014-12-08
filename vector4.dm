@@ -29,6 +29,7 @@ vector4
 			return res
 
 		homogenize()
+			var/h = dat[4][1]
 			if(dat[4][1] == 0)
 				world << "cannot homogenize vector"
 				print()
@@ -38,6 +39,8 @@ vector4
 
 			for(var/r = 1 to 4)
 				dat[r][1] /= dat[4][1]
+
+			return h
 
 		print(ignore_h = 0)
 			world << "\<[type]\>:\ref[src]"
