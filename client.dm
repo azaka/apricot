@@ -12,6 +12,111 @@ client
 		list/z_buffer[world.icon_size * world.maxx][world.icon_size * world.maxy]
 
 	verb
+		frame_spin()
+
+			var/x = 0
+			var/y = 0
+			var/z = -2
+
+			var/matrix4/center_transform = new \
+			(1, 0, 0, x, \
+			0, 1, 0, y, \
+			0, 0, 1, z, \
+			0, 0, 0, 1)
+
+			var/matrix4/origin_transform = new \
+			(1, 0, 0, -1 * x, \
+			0, 1, 0, -1 * y, \
+			0, 0, 1, -1 * z, \
+			0, 0, 0, 1)
+
+			var/angle = 5
+
+			var/matrix4/rotate_transform = new \
+			(cos(angle), 0, sin(angle), 0, \
+			0, 1, 0, 0, \
+			-1 * sin(angle), 0, cos(angle), 0, \
+			0, 0, 0, 1)
+
+			var/matrix4/model_transform = center_transform.multiply(rotate_transform.multiply(origin_transform))
+
+			for(var/vertex/v in vertices)
+				v.position = model_transform.multiply(v.position)
+
+			project_vertices(vertices, 1, 1)
+
+
+		generate_spinning_triangle()
+			var/icon/cache = icon()
+			cache.Scale(320, 320)
+
+			ortho_triangle()
+
+			//prevent "reversal"
+			move_back()
+
+			var/x = 0
+			var/y = 0
+			var/z = -2
+
+			var/matrix4/center_transform = new \
+			(1, 0, 0, x, \
+			0, 1, 0, y, \
+			0, 0, 1, z, \
+			0, 0, 0, 1)
+
+			var/matrix4/origin_transform = new \
+			(1, 0, 0, -1 * x, \
+			0, 1, 0, -1 * y, \
+			0, 0, 1, -1 * z, \
+			0, 0, 0, 1)
+
+			var/angle = 5
+
+			var/matrix4/rotate_transform = new \
+			(cos(angle), 0, sin(angle), 0, \
+			0, 1, 0, 0, \
+			-1 * sin(angle), 0, cos(angle), 0, \
+			0, 0, 0, 1)
+
+			var/matrix4/model_transform = center_transform.multiply(rotate_transform.multiply(origin_transform))
+
+			var/frame = 1
+			var/t
+			var/elapsed
+			var/total_frame = round(360 / angle)
+			//one complete rotation
+			while(frame < total_frame)
+				t = world.timeofday
+				for(var/vertex/v in vertices)
+					v.position = model_transform.multiply(v.position)
+
+				project_vertices(vertices, 1, 1)
+
+				fcopy(canvas.work_icon, "frames/frame[frame].dmi")
+				cache.Insert(icon(canvas.work_icon), frame=frame)
+
+				frame++
+
+				elapsed = world.timeofday - t
+				src << "generated frame [frame] of [total_frame] (took [elapsed / 10] s)"
+
+
+
+				sleep(elapsed)
+				//sleep(world.tick_lag)
+
+			src << "replay started..."
+			clear_screen()
+
+			var/obj/O = new
+			O.icon = cache
+			O.screen_loc = "1,1"
+			screen += O
+
+			fcopy(cache, "anim.dmi")
+
+
 		new_pyramid()
 			vertices = list()
 
@@ -62,8 +167,8 @@ client
 			vertices = list()
 
 			vertices += new /vertex(0, 1, -2, "#f00")
-			vertices += new /vertex(-1, 0, -2, "#f00")
-			vertices += new /vertex(1, 0, -2, "#f00")
+			vertices += new /vertex(-1, 0, -2, "#0f0")
+			vertices += new /vertex(1, 0, -2, "#00f")
 
 
 			if(!camera)
@@ -387,7 +492,7 @@ client
 
 			return vertices
 
-		project_vertices(list/vertices, apply_view, depth_test)
+		project_vertices(list/vertices, apply_view, depth_test, skip_update=0)
 			clear_screen()
 
 			var/matrix4/view_transform = null
@@ -550,7 +655,8 @@ client
 					p2.homogenize()
 					draw_line(p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y())
 
-			update_screen()
+			if(!skip_update)
+				update_screen()
 
 		update_screen()
 			clear_z_buffer()
