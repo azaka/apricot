@@ -86,7 +86,7 @@ client
 			var/elapsed
 			var/total_frame = round(360 / angle)
 			//one complete rotation
-			while(frame < total_frame)
+			while(frame <= total_frame)
 				t = world.timeofday
 				for(var/vertex/v in vertices)
 					v.position = model_transform.multiply(v.position)
@@ -96,12 +96,10 @@ client
 				fcopy(canvas.work_icon, "frames/frame[frame].dmi")
 				cache.Insert(icon(canvas.work_icon), frame=frame)
 
-				frame++
-
 				elapsed = world.timeofday - t
 				src << "generated frame [frame] of [total_frame] (took [elapsed / 10] s)"
 
-
+				frame++
 
 				sleep(elapsed)
 				//sleep(world.tick_lag)
@@ -346,34 +344,6 @@ client
 
 			project_vertices(vertices, 1, 1)
 
-		draw_triangle2(xa as num, ya as num, xb as num, yb as num, xc as num, yc as num)
-			var/z = 1
-
-			for(var/x = 1 to world.maxx * world.icon_size)
-				for(var/y = 1 to world.maxy * world.icon_size)
-					var/gamma = ((ya - yb) * x + (xb - xa) * y + xa * yb - xb * ya) \
-								/\
-								((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
-
-					var/beta = ((ya - yc) * x + (xc - xa) * y + xa * yc - xc * ya) \
-								/\
-								((ya - yc) * xb + (xc - xa) * yb + xa * yc - xc * ya)
-
-					var/alpha = 1 - beta - gamma
-
-					if((alpha in 0 to 1) && (beta in 0 to 1) && (gamma in 0 to 1))
-						//each point is either fully red, green or blue respectively
-
-						if(!z_buffer[x][y] || z >= z_buffer[x][y])
-							z_buffer[x][y] = z
-							//set pixel
-							draw_point(x, y, rgb(alpha * 255, beta * 255, gamma * 255))
-							#ifndef HAS_CANVAS
-							sleep(1)
-							#endif
-
-			update_screen()
-
 
 	proc
 		draw_triangle(xa, ya, za, h0, vertex/va, xb, yb, zb, h1, vertex/vb, xc, yc, zc, h2, vertex/vc)
@@ -407,16 +377,18 @@ client
 							if(!z_buffer[x][y] || z >= z_buffer[x][y])
 								z_buffer[x][y] = z
 
+								var/d = h1 * h2 + h2 * beta * (h0 - h1) + h1 * gamma * (h0 - h2)
+
+								var/beta_w = h0 * h2 * beta / d
+								var/gamma_w = h0 * h1 * gamma / d
+								var/alpha_w = 1 - beta_w - gamma_w
+
+								alpha = alpha_w
+								beta = beta_w
+								gamma = gamma_w
+
 								var/rgb
 								if(va.material)
-									var/d = h1 * h2 + h2 * beta * (h0 - h1) + h1 * gamma * (h0 - h2)
-									var/beta_w = h0 * h2 * beta / d
-									var/gamma_w = h0 * h1 * gamma / d
-									var/alpha_w = 1 - beta_w - gamma_w
-
-									alpha = alpha_w
-									beta = beta_w
-									gamma = gamma_w
 
 									var/u = alpha * va.tex_coord[1] + beta * vb.tex_coord[1] + gamma * vc.tex_coord[1]
 									var/v = alpha * va.tex_coord[2] + beta * vb.tex_coord[2] + gamma * vc.tex_coord[2]
