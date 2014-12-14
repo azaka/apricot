@@ -6,6 +6,7 @@ vertex
 		rgb
 		material/material
 		list/tex_coord
+		vector3/normal
 
 	New(x = 0, y = 0, z = -1)
 		position = new(x, y, z, 1)

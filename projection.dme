@@ -18,6 +18,7 @@
 #include "_defines.dm"
 #include "camera.dm"
 #include "client.dm"
+#include "light.dm"
 #include "material.dm"
 #include "matrix4.dm"
 #include "vector3.dm"

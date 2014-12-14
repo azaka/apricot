@@ -10,6 +10,7 @@ client
 		#endif
 		angle = 0
 		list/z_buffer[world.icon_size * world.maxx][world.icon_size * world.maxy]
+		light/light
 
 	verb
 		frame_spin()
@@ -161,6 +162,56 @@ client
 
 			project_vertices(vertices, 1, 1)
 
+		remove_light()
+			light = null
+			project_vertices(vertices, 1, 1)
+
+		apply_white_light()
+			//directional light
+			if(!light)
+				light = new
+				light.direction = new(0, 1, 1)
+
+			light.intensity = "#fff"
+
+			project_vertices(vertices, 1, 1)
+
+		apply_red_light()
+			if(!light)
+				light = new
+				light.direction = new(0, 1, 1)
+
+			light.intensity = "#f00"
+
+			project_vertices(vertices, 1, 1)
+
+		apply_green_light()
+			if(!light)
+				light = new
+				light.direction = new(0, 1, 1)
+
+			light.intensity = "#0f0"
+
+			project_vertices(vertices, 1, 1)
+
+		apply_blue_light()
+			if(!light)
+				light = new
+				light.direction = new(0, 1, 1)
+
+			light.intensity = "#00f"
+
+			project_vertices(vertices, 1, 1)
+
+		apply_black_light()
+			if(!light)
+				light = new
+				light.direction = new(0, 1, 1)
+
+			light.intensity = "#000"
+
+			project_vertices(vertices, 1, 1)
+
 		ortho_triangle()
 			vertices = list()
 
@@ -173,6 +224,11 @@ client
 				camera = new
 				camera.eye = new(0, 0, 2.6)
 				camera.gaze = new(0, 0, 1)
+
+			//assign normals
+			var/vector3/normal = new(0, 0, 1)
+			for(var/vertex/v in vertices)
+				v.normal = normal.copy()
 
 			project_vertices(vertices, 1, 1)
 
@@ -387,6 +443,7 @@ client
 								beta = beta_w
 								gamma = gamma_w
 
+								var/reflectance
 								var/rgb
 								if(va.material)
 
@@ -395,14 +452,33 @@ client
 
 									ASSERT(u in 0 to 1 && v in 0 to 1)
 
-									rgb = va.material.tex.GetPixel(va.material.tex.Width() * u, va.material.tex.Height() * v)
+									reflectance = va.material.tex.GetPixel(va.material.tex.Width() * u, va.material.tex.Height() * v)
 
 								else
 									var/rr = alpha * va_rgb[1] + beta * vb_rgb[1] + gamma * vc_rgb[1]
 									var/gg = alpha * va_rgb[2] + beta * vb_rgb[2] + gamma * vc_rgb[2]
 									var/bb = alpha * va_rgb[3] + beta * vb_rgb[3] + gamma * vc_rgb[3]
 
+									reflectance = rgb(rr, gg, bb)
+
+								if(light)
+									//diffuse shading
+									var/list/rgb_reflectance = ReadRGB(reflectance)
+									var/r = rgb_reflectance[1] / 255
+									var/g = rgb_reflectance[2] / 255
+									var/b = rgb_reflectance[3] / 255
+
+									var/list/rgb_intensity = ReadRGB(light.intensity)
+									for(var/i = 1 to rgb_intensity.len)
+										rgb_intensity[i] /= 255
+
+									var/rr = 255 * (r * rgb_intensity[1] * max(0, va.normal.dot(light.direction)))
+									var/gg = 255 * (g * rgb_intensity[2] * max(0, va.normal.dot(light.direction)))
+									var/bb = 255 * (b * rgb_intensity[3] * max(0, va.normal.dot(light.direction)))
+
 									rgb = rgb(rr, gg, bb)
+								else
+									rgb = reflectance
 
 								//set pixel
 								draw_point(x, y, rgb)

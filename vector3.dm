@@ -67,6 +67,27 @@ vector3
 
 			. = sqrt(.)
 
+		copy()
+
+			var/vector3/res = new
+			for(var/i = 1 to 3)
+				res.dat[i][1] = dat[i][1]
+
+			return res
+
+		dot(vector3/v)
+			if(!istype(v))
+				return
+
+			var/vector3/v1 = copy()
+			v1.normalize()
+			var/vector3/v2 = v.copy()
+			v2.normalize()
+
+			. = 0
+			for(var/i = 1 to 3)
+				. += v1.dat[i][1] * v2.dat[i][1]
+
 		cross(vector3/v)
 			var/vector3/res = new
 			res.dat[1][1] = dat[2][1] * v.dat[3][1] - dat[3][1] * v.dat[2][1]
