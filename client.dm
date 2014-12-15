@@ -148,6 +148,10 @@ client
 			for(var/vertex/v in vertices)
 				v.position = translate.multiply(v.position)
 
+			var/vector3/normal = new(0, 0, 1)
+			for(var/vertex/v in vertices)
+				v.normal = normal.copy()
+
 			project_vertices(vertices, 1, 1)
 
 		translate_pyramid()
@@ -472,9 +476,14 @@ client
 									for(var/i = 1 to rgb_intensity.len)
 										rgb_intensity[i] /= 255
 
-									var/rr = 255 * (r * rgb_intensity[1] * max(0, va.normal.dot(light.direction)))
-									var/gg = 255 * (g * rgb_intensity[2] * max(0, va.normal.dot(light.direction)))
-									var/bb = 255 * (b * rgb_intensity[3] * max(0, va.normal.dot(light.direction)))
+									var/list/rgb_ambience = ReadRGB(camera.ambience)
+									var/ar = rgb_ambience[1] / 255
+									var/ag = rgb_ambience[2] / 255
+									var/ab = rgb_ambience[3] / 255
+
+									var/rr = 255 * (r * min(1, ar + rgb_intensity[1] * max(0, va.normal.dot(light.direction))))
+									var/gg = 255 * (g * min(1, ag + rgb_intensity[2] * max(0, va.normal.dot(light.direction))))
+									var/bb = 255 * (b * min(1, ab + rgb_intensity[3] * max(0, va.normal.dot(light.direction))))
 
 									rgb = rgb(rr, gg, bb)
 								else
