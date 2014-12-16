@@ -481,9 +481,17 @@ client
 									var/ag = rgb_ambience[2] / 255
 									var/ab = rgb_ambience[3] / 255
 
-									var/rr = 255 * (r * min(1, ar + rgb_intensity[1] * max(0, va.normal.dot(light.direction))))
-									var/gg = 255 * (g * min(1, ag + rgb_intensity[2] * max(0, va.normal.dot(light.direction))))
-									var/bb = 255 * (b * min(1, ab + rgb_intensity[3] * max(0, va.normal.dot(light.direction))))
+									var/vector3/highlight = camera.gaze.add(light.direction)
+									highlight.normalize()
+
+									var/phong = 16
+
+									var/rr = 255 * (r * min(1, ar + rgb_intensity[1] * max(0, va.normal.dot(light.direction))) \
+													+ rgb_intensity[1] * highlight.dot(va.normal) ** phong)
+									var/gg = 255 * (g * min(1, ag + rgb_intensity[2] * max(0, va.normal.dot(light.direction))) \
+													+ rgb_intensity[2] * highlight.dot(va.normal) ** phong)
+									var/bb = 255 * (b * min(1, ab + rgb_intensity[3] * max(0, va.normal.dot(light.direction))) \
+													+ rgb_intensity[3] * highlight.dot(va.normal) ** phong)
 
 									rgb = rgb(rr, gg, bb)
 								else
