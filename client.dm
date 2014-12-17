@@ -419,6 +419,15 @@ client
 
 				ASSERT((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
 
+				var/vector3/normal = new
+				var/vector3/avg_normal = new
+				avg_normal.set_x((va.normal.get_x() + vb.normal.get_x() + vc.normal.get_x()) / 3)
+				avg_normal.set_y((va.normal.get_y() + vb.normal.get_y() + vc.normal.get_y()) / 3)
+				avg_normal.set_z((va.normal.get_z() + vb.normal.get_z() + vc.normal.get_z()) / 3)
+
+				if(va.normal.equals(vb.normal) && vb.normal.equals(vc.normal))
+					ASSERT(avg_normal.equals(va.normal))
+
 				for(var/x = 1 to world.maxx * world.icon_size)
 					for(var/y = 1 to world.maxy * world.icon_size)
 						var/gamma = ((ya - yb) * x + (xb - xa) * y + xa * yb - xb * ya) \
@@ -485,13 +494,16 @@ client
 									highlight.normalize()
 
 									var/phong = 16
+									normal.set_x(alpha * va.normal.get_x() + beta * vb.normal.get_x() + gamma * vc.normal.get_x())
+									normal.set_y(alpha * va.normal.get_y() + beta * vb.normal.get_y() + gamma * vc.normal.get_y())
+									normal.set_z(alpha * va.normal.get_z() + beta * vb.normal.get_z() + gamma * vc.normal.get_z())
 
-									var/rr = 255 * (r * min(1, ar + rgb_intensity[1] * max(0, va.normal.dot(light.direction))) \
-													+ rgb_intensity[1] * highlight.dot(va.normal) ** phong)
-									var/gg = 255 * (g * min(1, ag + rgb_intensity[2] * max(0, va.normal.dot(light.direction))) \
-													+ rgb_intensity[2] * highlight.dot(va.normal) ** phong)
-									var/bb = 255 * (b * min(1, ab + rgb_intensity[3] * max(0, va.normal.dot(light.direction))) \
-													+ rgb_intensity[3] * highlight.dot(va.normal) ** phong)
+									var/rr = 255 * (r * min(1, ar + rgb_intensity[1] * max(0, avg_normal.dot(light.direction))) \
+													+ rgb_intensity[1] * highlight.dot(normal) ** phong)
+									var/gg = 255 * (g * min(1, ag + rgb_intensity[2] * max(0, avg_normal.dot(light.direction))) \
+													+ rgb_intensity[2] * highlight.dot(normal) ** phong)
+									var/bb = 255 * (b * min(1, ab + rgb_intensity[3] * max(0, avg_normal.dot(light.direction))) \
+													+ rgb_intensity[3] * highlight.dot(normal) ** phong)
 
 									rgb = rgb(rr, gg, bb)
 								else

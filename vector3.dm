@@ -67,6 +67,16 @@ vector3
 
 			. = sqrt(.)
 
+		equals(vector3/v)
+			if(!istype(v))
+				return 0
+
+			for(var/i = 1 to 3)
+				if(dat[i][1] != v.dat[i][1])
+					return 0
+
+			return 1
+
 		copy()
 
 			var/vector3/res = new
