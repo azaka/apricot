@@ -21,12 +21,12 @@ vector4
 		get_z()
 			return dat[3][1]
 
-		multiply(x)
+		/*multiply(x)
 			var/vector4/res = new
 			for(var/i = 1 to 3)
 				res.dat[i][1] = dat[i][1] * x
 			res.dat[4][1] = 1
-			return res
+			return res*/
 
 		homogenize()
 			var/h = dat[4][1]

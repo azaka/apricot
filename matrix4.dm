@@ -36,6 +36,15 @@ matrix4
 
 				return res
 
+		transpose()
+			var/matrix4/res = new
+
+			for(var/r = 1 to 4)
+				for(var/c = 1 to 4)
+					res.dat[r][c] = dat[c][r]
+
+			return res
+
 		equals(matrix4/m)
 			for(var/r = 1 to 4)
 				for(var/c = 1 to 4)

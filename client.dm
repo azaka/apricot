@@ -420,10 +420,8 @@ client
 				ASSERT((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
 
 				var/vector3/normal = new
-				var/vector3/avg_normal = new
-				avg_normal.set_x((va.normal.get_x() + vb.normal.get_x() + vc.normal.get_x()) / 3)
-				avg_normal.set_y((va.normal.get_y() + vb.normal.get_y() + vc.normal.get_y()) / 3)
-				avg_normal.set_z((va.normal.get_z() + vb.normal.get_z() + vc.normal.get_z()) / 3)
+				var/vector3/avg_normal = vc.normal.add(vb.normal.add(va.normal))
+				avg_normal.normalize()
 
 				if(va.normal.equals(vb.normal) && vb.normal.equals(vc.normal))
 					ASSERT(avg_normal.equals(va.normal))
