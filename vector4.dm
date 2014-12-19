@@ -7,9 +7,19 @@ vector4
 		if(args.len < 1)
 			return
 
-		var/i = 0
-		for(var/r = 1 to 4)
-			dat[r][1] = args[++i]
+		if(istype(args[1], /vector3) && isnum(args[2]))
+			var/vector3/v = args[1]
+			for(var/r = 1 to 4)
+				if(r == 4)
+					dat[r][1] = args[2]
+				else
+					dat[r][1] = v.dat[r][1]
+
+		else
+
+			var/i = 0
+			for(var/r = 1 to 4)
+				dat[r][1] = args[++i]
 
 	proc
 		get_x()
@@ -20,6 +30,14 @@ vector4
 
 		get_z()
 			return dat[3][1]
+
+		copy()
+
+			var/vector4/res = new
+			for(var/i = 1 to 4)
+				res.dat[i][1] = dat[i][1]
+
+			return res
 
 		/*multiply(x)
 			var/vector4/res = new

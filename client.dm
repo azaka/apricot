@@ -82,15 +82,23 @@ client
 
 			var/matrix4/model_transform = center_transform.multiply(rotate_transform.multiply(origin_transform))
 
+			var/matrix4/transpose_rotate = rotate_transform.transpose()
+
+			var/matrix4/normal_transform = center_transform.multiply(transpose_rotate.multiply(origin_transform))
+			normal_transform = normal_transform.transpose()
+
 			var/frame = 1
 			var/t
 			var/elapsed
 			var/total_frame = round(360 / angle)
 			//one complete rotation
+			var/vector4/n = new
 			while(frame <= total_frame)
 				t = world.timeofday
 				for(var/vertex/v in vertices)
 					v.position = model_transform.multiply(v.position)
+					n = normal_transform.multiply(new /vector4(v.normal, 0))
+					v.normal = new(n.get_x(), n.get_y(), n.get_z())
 
 				project_vertices(vertices, 1, 1)
 
