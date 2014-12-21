@@ -619,6 +619,12 @@ client
 				0, 0, 1, e.get_z(), \
 				0, 0, 0, 1)
 
+				var/matrix4/inverse_view_translate = new\
+				(1, 0, 0, -e.get_x(), \
+				0, 1, 0, -e.get_y(), \
+				0, 0, 1, -e.get_z(), \
+				0, 0, 0, 1)
+
 				var/matrix4/view_scale = new \
 				(u.get_x(), u.get_y(), u.get_z(), 0, \
 				v.get_x(), v.get_y(), v.get_z(), 0, \

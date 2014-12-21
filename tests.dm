@@ -25,4 +25,17 @@ client
 
 			ASSERT(m1.equals(m2.transpose()))
 
+			var/matrix4/m5 = new\
+			(5, 3, -2, -6,
+			1, 2, 7, 4,
+			-10, 3, 5, -3,
+			-4, 2, 6, 1)
+
+			m5.print()
+			src << "determinant: [m5.determinant()]"
+
+			src << "inverse"
+			var/matrix4/m5_inv = m5.inverse()
+			m5_inv.print()
+
 			src << "all tests passed"
