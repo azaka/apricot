@@ -11,9 +11,28 @@ client
 		angle = 0
 		list/z_buffer[world.icon_size * world.maxx][world.icon_size * world.maxy]
 		light/light
+		perspective_correction = 1
+
+	Stat()
+		if(vertices)
+
+			var/i = 1
+			for(var/vertex/v in vertices)
+				stat("vertex #[i] (world space)", v.position.string())
+				stat("vertex #[i] (clip space)", v.clip_position.string())
+				i++
+
+		if(!camera)
+			return ..()
+
+		stat("camera (position)", camera.eye.string())
+		stat("camera (gaze dir)", camera.gaze.string())
+		stat("camera (up dir)", camera.up.string())
+		stat("perspective correction", perspective_correction)
+
 
 	verb
-		frame_spin()
+		frame_spin(angle as num)
 
 			var/x = 0
 			var/y = 0
@@ -31,7 +50,7 @@ client
 			0, 0, 1, -1 * z, \
 			0, 0, 0, 1)
 
-			var/angle = 5
+			//var/angle = 5
 
 			var/matrix4/rotate_transform = new \
 			(cos(angle), 0, sin(angle), 0, \
@@ -42,10 +61,20 @@ client
 			var/matrix4/model_transform = center_transform.multiply(rotate_transform.multiply(origin_transform))
 
 			for(var/vertex/v in vertices)
+				src << "before: "
+				v.position.print()
 				v.position = model_transform.multiply(v.position)
+				src << "after: "
+				v.position.print()
+
 
 			project_vertices(vertices, 1, 1)
 
+		toggle_perspective_correction()
+			perspective_correction = 1 - perspective_correction
+			src << perspective_correction
+
+			project_vertices(vertices, 1, 1)
 
 		generate_spinning_triangle()
 			var/icon/cache = icon()
@@ -54,7 +83,7 @@ client
 			ortho_triangle()
 
 			//prevent "reversal"
-			move_back()
+			//move_back()
 
 			var/x = 0
 			var/y = 0
@@ -98,7 +127,7 @@ client
 				for(var/vertex/v in vertices)
 					v.position = model_transform.multiply(v.position)
 					n = normal_transform.multiply(new /vector4(v.normal, 0))
-					v.normal = new(n.get_x(), n.get_y(), n.get_z())
+					//v.normal = new(n.get_x(), n.get_y(), n.get_z())
 
 				project_vertices(vertices, 1, 1)
 
@@ -234,18 +263,13 @@ client
 
 			if(!camera)
 				camera = new
-				camera.eye = new(0, 0, 2.6)
-				camera.gaze = new(0, 0, 1)
+				camera.eye = new(0, 0, 0)
+				camera.gaze = new(0, 0, -1)	//gazes towards -ve z axis
 
 			//assign normals
 			var/vector3/normal = new(0, 0, 1)
 			for(var/vertex/v in vertices)
 				v.normal = normal.copy()
-
-			project_vertices(vertices, 1, 1)
-
-		move_back()
-			camera.eye = camera.eye.add(camera.gaze.multiply(0.5))
 
 			project_vertices(vertices, 1, 1)
 
@@ -304,13 +328,12 @@ client
 			#endif
 
 		set_eye_position(x as num, y as num, z as num)
-			camera.eye.set_x(x)
-			camera.eye.set_y(y)
-			camera.eye.set_z(z)
+			camera.eye = new(x, y, z, 1)
 
 			project_vertices(vertices, 1, 1)
 
 		up()
+
 			camera.eye = camera.eye.add(camera.up)
 			project_vertices(vertices, 1, 1)
 
@@ -584,7 +607,7 @@ client
 				if(!camera)
 					camera = new
 				if(!camera.eye)
-					camera.eye = new(0, 0, 2.6)
+					camera.eye = new(0, 0, 0, 1)
 				var/vector3/e = camera.eye
 				//src << "eye:"
 				//e.print()
@@ -698,8 +721,18 @@ client
 			//projection.print()
 
 			ASSERT(test.equals(projection))
+			var/matrix4/view_proj = projection.multiply(view_transform)
 			screen_transform = window_transform.multiply(projection.multiply(view_transform))
 			//screen_transform.print()
+
+			//var/matrix4/screen_transform = null
+			if(perspective_correction)
+				//(window * ortho) * persp * view
+				//window * proj * view
+				screen_transform = window_transform.multiply(projection.multiply(view_transform))
+			else
+				//(window * ortho) * view
+				screen_transform = window_transform.multiply(ortho_transform.multiply(view_transform))
 
 			if(depth_test)
 				for(var/i = 1; i <= vertices.len; i += 3)
@@ -707,10 +740,18 @@ client
 						return
 					var/vertex/v1 = vertices[i]
 					var/vector4/p1 = screen_transform.multiply(v1.position)
+					v1.clip_position = view_proj.multiply(v1.position)
+					v1.clip_position.homogenize()
+
 					var/vertex/v2 = vertices[i + 1]
 					var/vector4/p2 = screen_transform.multiply(v2.position)
+					v2.clip_position = view_proj.multiply(v2.position)
+					v2.clip_position.homogenize()
+
 					var/vertex/v3 = vertices[i + 2]
 					var/vector4/p3 = screen_transform.multiply(v3.position)
+					v3.clip_position = view_proj.multiply(v3.position)
+					v3.clip_position.homogenize()
 
 					var/h1 = p1.homogenize()
 					var/h2 = p2.homogenize()

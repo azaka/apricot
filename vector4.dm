@@ -14,7 +14,6 @@ vector4
 					dat[r][1] = args[2]
 				else
 					dat[r][1] = v.dat[r][1]
-
 		else
 
 			var/i = 0
@@ -30,6 +29,9 @@ vector4
 
 		get_z()
 			return dat[3][1]
+
+		get_h()
+			return dat[4][1]
 
 		copy()
 
@@ -59,6 +61,9 @@ vector4
 				dat[r][1] /= dat[4][1]
 
 			return h
+
+		string(ignore_h = 0)
+			return "[get_x()], [get_y()], [get_z()], [get_h()]"
 
 		print(ignore_h = 0)
 			world << "\<[type]\>:\ref[src]"

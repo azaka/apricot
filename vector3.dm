@@ -108,6 +108,9 @@ vector3
 
 			return res
 
+		string()
+			return "([get_x()], [get_y()], [get_z()])"
+
 		print()
 			world << "\<[type]\>:\ref[src]"
 			world << "([get_x()], [get_y()], [get_z()])"
