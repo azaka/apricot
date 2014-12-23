@@ -12,6 +12,7 @@ client
 		list/z_buffer[world.icon_size * world.maxx][world.icon_size * world.maxy]
 		light/light
 		perspective_correction = 1
+		fov
 
 	Stat()
 		if(vertices)
@@ -29,6 +30,7 @@ client
 		stat("camera (gaze dir)", camera.gaze.string())
 		stat("camera (up dir)", camera.up.string())
 		stat("perspective correction", perspective_correction)
+		stat("fov", fov)
 
 
 	verb
@@ -327,8 +329,8 @@ client
 				canvas.clear()
 			#endif
 
-		set_eye_position(x as num, y as num, z as num)
-			camera.eye = new(x, y, z, 1)
+		camera_set_position(x as num, y as num, z as num)
+			camera.eye = new(x, y, z)
 
 			project_vertices(vertices, 1, 1)
 
@@ -378,6 +380,14 @@ client
 
 		move_backward()
 			camera.eye = camera.eye.add(camera.gaze)
+			project_vertices(vertices, 1, 1)
+
+		camera_yaw(angle as num)
+			if(!camera)
+				return
+
+			camera.rotate_y(angle)
+
 			project_vertices(vertices, 1, 1)
 
 		move_cube_about_origin()
@@ -607,12 +617,12 @@ client
 				if(!camera)
 					camera = new
 				if(!camera.eye)
-					camera.eye = new(0, 0, 0, 1)
+					camera.eye = new(0, 0, 0)
 				var/vector3/e = camera.eye
 				//src << "eye:"
 				//e.print()
 				if(!camera.gaze)
-					camera.gaze = new(0, 0, 1)
+					camera.gaze = new(0, 0, -1)
 				var/vector3/g = camera.gaze
 
 				if(!camera.up)
@@ -637,12 +647,6 @@ client
 
 				//view
 				var/matrix4/view_translate = new \
-				(1, 0, 0, e.get_x(), \
-				0, 1, 0, e.get_y(), \
-				0, 0, 1, e.get_z(), \
-				0, 0, 0, 1)
-
-				var/matrix4/inverse_view_translate = new\
 				(1, 0, 0, -e.get_x(), \
 				0, 1, 0, -e.get_y(), \
 				0, 0, 1, -e.get_z(), \
@@ -655,8 +659,8 @@ client
 				0, 0, 0, 1)
 
 				view_transform = view_scale.multiply(view_translate)
-				//src << "view"
-				//view_transform.print()
+				src << "view"
+				view_transform.print()
 
 			//orthographic box
 			var/l = -3
@@ -665,6 +669,8 @@ client
 			var/b = -3
 			var/n = -1
 			var/f = -3
+
+			src.fov = 2 * arctan(t / abs(n))
 
 			//perspective
 			var/matrix4/perspective2 = new \
