@@ -418,6 +418,22 @@ client
 				//angle += 0.05
 				sleep(world.tick_lag)
 
+		camera_look_at(x as num, y as num, z as num)
+			if(!camera)
+				return
+
+			var/vector3/center = new(x, y, z)
+			camera.gaze = center.subtract(camera.eye)
+			camera.gaze.normalize()
+
+			//gaze and world up is coplanar
+			var/vector3/right = camera.gaze.cross(new /vector3(0, 1, 0))
+
+			camera.up = right.cross(camera.gaze)
+
+			project_vertices(vertices, 1, 1)
+
+
 		look_from_right_side()
 			if(!camera)
 				return

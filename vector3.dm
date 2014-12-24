@@ -42,6 +42,13 @@ vector3
 
 			return res
 
+		subtract(vector3/v)
+			var/vector3/res = new
+			for(var/i = 1 to 3)
+				res.dat[i][1] = dat[i][1] - v.dat[i][1]
+
+			return res
+
 		multiply(x)
 			var/vector3/res = new
 			for(var/i = 1 to 3)
