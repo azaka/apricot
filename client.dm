@@ -20,7 +20,8 @@ client
 			var/i = 1
 			for(var/vertex/v in vertices)
 				stat("vertex #[i] (world space)", v.position.string())
-				stat("vertex #[i] (clip space)", v.clip_position.string())
+				if(v.clip_position)
+					stat("vertex #[i] (clip space)", v.clip_position.string())
 				i++
 
 		if(!camera)
@@ -433,6 +434,13 @@ client
 
 			project_vertices(vertices, 1, 1)
 
+		vertex_add(x as num, y as num, z as num, rgb as color)
+			if(!vertices)
+				vertices = list()
+
+			vertices += new /vertex(x, y, z, rgb)
+
+			project_vertices(vertices, 1, 1)
 
 		look_from_right_side()
 			if(!camera)
@@ -477,11 +485,13 @@ client
 				ASSERT((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
 
 				var/vector3/normal = new
-				var/vector3/avg_normal = vc.normal.add(vb.normal.add(va.normal))
-				avg_normal.normalize()
+				var/vector3/avg_normal = null
+				if(light)
+					avg_normal = vc.normal.add(vb.normal.add(va.normal))
+					avg_normal.normalize()
 
-				if(va.normal.equals(vb.normal) && vb.normal.equals(vc.normal))
-					ASSERT(avg_normal.equals(va.normal))
+					if(va.normal.equals(vb.normal) && vb.normal.equals(vc.normal))
+						ASSERT(avg_normal.equals(va.normal))
 
 				for(var/x = 1 to world.maxx * world.icon_size)
 					for(var/y = 1 to world.maxy * world.icon_size)
