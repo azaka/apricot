@@ -434,6 +434,35 @@ client
 
 			project_vertices(vertices, 1, 1)
 
+		vertex_load_from_file(f as file)
+			if(!f)
+				return
+
+			if(!vertices)
+				vertices = list()
+
+			var/list/lines = dd_file2list(f)
+
+			for(var/line in lines)
+				//comment
+				if(findtext(line, "#", 1, 2))
+					continue
+
+				var/list/vertex_data = dd_text2list(line, ",")
+				if(vertex_data.len < 3)
+					continue
+
+				var/rgb = vertex_data[4]
+				var/index = 0
+				while(findtext(rgb, " ", ++index, index + 1))
+				rgb = copytext(rgb, index)
+
+				var/vertex/v =  new(text2num(vertex_data[1]), text2num(vertex_data[2]), text2num(vertex_data[3]), rgb)
+				vertices += v
+
+			project_vertices(vertices, 1, 1)
+
+
 		vertex_add(x as num, y as num, z as num, rgb as color)
 			if(!vertices)
 				vertices = list()
@@ -823,7 +852,8 @@ client
 		update_screen()
 			clear_z_buffer()
 			#ifdef HAS_CANVAS
-			canvas.update()
+			if(canvas)
+				canvas.update()
 			#endif
 
 		draw_point(x, y, rgb, instant_update)

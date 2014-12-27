@@ -15,6 +15,7 @@
 // BEGIN_INCLUDE
 #include <lummoxjr\iconprocs\IconProcs.dme>
 #include <koil\canvas\Canvas.dme>
+#include <deadron\texthandling\TextHandling.dme>
 #include "_defines.dm"
 #include "camera.dm"
 #include "client.dm"
