@@ -323,6 +323,9 @@ client
 		draw_vertices_with_view()
 			project_vertices(vertices, 1)
 
+		vertices_clear()
+			vertices = list()
+
 		clear_screen()
 			screen = null
 			#ifdef HAS_CANVAS
@@ -379,8 +382,12 @@ client
 		stop()
 			is_moving = 0
 
-		move_backward()
-			camera.eye = camera.eye.add(camera.gaze)
+		camera_up()
+			camera.eye = camera.eye.add(camera.up)
+			project_vertices(vertices, 1, 1)
+
+		camera_back()
+			camera.eye = camera.eye.add(camera.gaze.multiply(-1))
 			project_vertices(vertices, 1, 1)
 
 		camera_yaw(angle as num)
