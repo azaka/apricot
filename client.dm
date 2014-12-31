@@ -129,8 +129,9 @@ client
 				t = world.timeofday
 				for(var/vertex/v in vertices)
 					v.position = model_transform.multiply(v.position)
-					n = normal_transform.multiply(new /vector4(v.normal, 0))
-					//v.normal = new(n.get_x(), n.get_y(), n.get_z())
+					if(v.normal)
+						n = normal_transform.multiply(new /vector4(v.normal, 0))
+						v.normal = new(n.get_x(), n.get_y(), n.get_z())
 
 				project_vertices(vertices, 1, 1)
 
@@ -142,8 +143,8 @@ client
 
 				frame++
 
-				sleep(elapsed)
-				//sleep(world.tick_lag)
+				//sleep(elapsed)
+				sleep(world.tick_lag)
 
 			src << "replay started..."
 			clear_screen()
@@ -486,7 +487,7 @@ client
 
 			project_vertices(vertices, 1, 1)
 
-		load_vertices_data_from_file(f as file)
+		load_data_from_file(f as file)
 			set category = "World"
 
 			if(!f)
@@ -497,25 +498,88 @@ client
 
 			var/list/lines = dd_file2list(f)
 
+
+			#define DATA_TYPE_VERTEX			1
+			#define DATA_TYPE_CAMERA_POSITION	2
+			#define DATA_TYPE_LOOKAT			3
+
+			var/data_type = DATA_TYPE_VERTEX
+
 			for(var/line in lines)
 				//comment
 				if(findtext(line, "#", 1, 2))
 					continue
 
-				var/list/vertex_data = dd_text2list(line, ",")
-				if(vertex_data.len < 3)
+				//camera position
+				if(findtext(line, "!position", 1, 10))
+					data_type = DATA_TYPE_CAMERA_POSITION
 					continue
 
-				var/rgb = vertex_data[4]
-				var/index = 0
-				while(findtext(rgb, " ", ++index, index + 1))
-				rgb = copytext(rgb, index)
+				//camera lookat
+				if(findtext(line, "!lookat", 1, 8))
+					data_type = DATA_TYPE_LOOKAT
+					continue
 
-				var/vertex/v =  new(text2num(vertex_data[1]), text2num(vertex_data[2]), text2num(vertex_data[3]), rgb)
-				vertices += v
+				//process data
+				var/list/data = dd_text2list(line, ",")
+				if(data.len < 3)
+					continue
+
+				switch(data_type)
+					if(DATA_TYPE_LOOKAT)
+						if(!camera)
+							camera = new
+							camera.gaze = new(0, 0, -1)
+							camera.eye = new
+
+						var/x = text2num(data[1])
+						var/y = text2num(data[2])
+						var/z = text2num(data[3])
+
+						if(!isnum(x) || !isnum(y) || !isnum(z))
+							continue
+
+						look_at(x, y, z)
+						data_type = DATA_TYPE_VERTEX
+
+						continue
+
+					if(DATA_TYPE_CAMERA_POSITION)
+						if(!camera)
+							camera = new
+							camera.gaze = new(0, 0, -1)
+							camera.eye = new
+
+						var/x = text2num(data[1])
+						var/y = text2num(data[2])
+						var/z = text2num(data[3])
+
+						if(!isnum(x) || !isnum(y) || !isnum(z))
+							continue
+
+						camera.eye.set_x(x)
+						camera.eye.set_y(y)
+						camera.eye.set_z(z)
+
+						data_type = DATA_TYPE_VERTEX
+						continue
+
+					if(DATA_TYPE_VERTEX)
+						var/list/vertex_data = data
+
+						var/rgb = vertex_data[4]
+						var/index = 0
+						while(findtext(rgb, " ", ++index, index + 1))
+						rgb = copytext(rgb, index)
+
+						var/vertex/v =  new(text2num(vertex_data[1]), text2num(vertex_data[2]), text2num(vertex_data[3]), rgb)
+						vertices += v
 
 			project_vertices(vertices, 1, 1)
 
+			#undef DATA_TYPE_VERTEX
+			#undef DATA_TYPE_CAMERA_POSITION
+			#undef DATA_TYPE_LOOKAT
 
 		vertex_add(x as num, y as num, z as num, rgb as color)
 			if(!vertices)
