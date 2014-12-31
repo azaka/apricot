@@ -79,6 +79,82 @@ client
 
 			project_vertices(vertices, 1, 1)
 
+		generate_rotation()
+			set category = "Model Transform"
+
+			if(!vertices || !vertices.len)
+				return
+
+			var/icon/cache = icon()
+			cache.Scale(320, 320)
+
+			var/x = 0
+			var/y = 0
+			var/z = -2
+
+			var/matrix4/center_transform = new \
+			(1, 0, 0, x, \
+			0, 1, 0, y, \
+			0, 0, 1, z, \
+			0, 0, 0, 1)
+
+			var/matrix4/origin_transform = new \
+			(1, 0, 0, -1 * x, \
+			0, 1, 0, -1 * y, \
+			0, 0, 1, -1 * z, \
+			0, 0, 0, 1)
+
+			var/angle = 5
+
+			var/matrix4/rotate_transform = new \
+			(cos(angle), 0, sin(angle), 0, \
+			0, 1, 0, 0, \
+			-1 * sin(angle), 0, cos(angle), 0, \
+			0, 0, 0, 1)
+
+			var/matrix4/model_transform = center_transform.multiply(rotate_transform.multiply(origin_transform))
+
+			var/matrix4/transpose_rotate = rotate_transform.transpose()
+
+			var/matrix4/normal_transform = center_transform.multiply(transpose_rotate.multiply(origin_transform))
+			normal_transform = normal_transform.transpose()
+
+			var/frame = 1
+			var/t
+			var/elapsed
+			var/total_frame = round(360 / angle)
+			//one complete rotation
+			var/vector4/n = new
+			while(frame <= total_frame)
+				t = world.timeofday
+				for(var/vertex/v in vertices)
+					v.position = model_transform.multiply(v.position)
+					n = normal_transform.multiply(new /vector4(v.normal, 0))
+					//v.normal = new(n.get_x(), n.get_y(), n.get_z())
+
+				project_vertices(vertices, 1, 1)
+
+				fcopy(canvas.work_icon, "frames/frame[frame].dmi")
+				cache.Insert(icon(canvas.work_icon), frame=frame)
+
+				elapsed = world.timeofday - t
+				src << "generated frame [frame] of [total_frame] (took [elapsed / 10] s)"
+
+				frame++
+
+				sleep(elapsed)
+				//sleep(world.tick_lag)
+
+			src << "replay started..."
+			clear_screen()
+
+			var/obj/O = new
+			O.icon = cache
+			O.screen_loc = "1,1"
+			screen += O
+
+			fcopy(cache, "anim.dmi")
+
 		generate_spinning_triangle()
 			var/icon/cache = icon()
 			cache.Scale(320, 320)
@@ -276,7 +352,9 @@ client
 
 			project_vertices(vertices, 1, 1)
 
-		camera_info()
+		print_info()
+			set category = "Camera"
+
 			if(!camera)
 				return
 
@@ -333,21 +411,16 @@ client
 				canvas.clear()
 			#endif
 
-		camera_set_position(x as num, y as num, z as num)
+		set_position(x as num, y as num, z as num)
+			set category = "Camera"
+
 			camera.eye = new(x, y, z)
 
 			project_vertices(vertices, 1, 1)
 
-		up()
-
-			camera.eye = camera.eye.add(camera.up)
-			project_vertices(vertices, 1, 1)
-
-		down()
-			camera.eye = camera.eye.add(camera.up.multiply(-1))
-			project_vertices(vertices, 1, 1)
-
 		sidestep_left()
+			set category = "Camera"
+
 			//gaze x up
 			var/vector3/left = camera.gaze.cross(camera.up)
 			left.normalize()
@@ -358,6 +431,8 @@ client
 			project_vertices(vertices, 1)
 
 		sidestep_right()
+			set category = "Camera"
+
 			var/vector3/right = camera.up.cross(camera.gaze)
 			right.normalize()
 
@@ -382,51 +457,21 @@ client
 		stop()
 			is_moving = 0
 
-		camera_up()
+		up()
+			set category = "Camera"
+
 			camera.eye = camera.eye.add(camera.up)
 			project_vertices(vertices, 1, 1)
 
-		camera_back()
+		back()
+			set category = "Camera"
+
 			camera.eye = camera.eye.add(camera.gaze.multiply(-1))
 			project_vertices(vertices, 1, 1)
 
-		camera_yaw(angle as num)
-			if(!camera)
-				return
+		look_at(x as num, y as num, z as num)
+			set category = "Camera"
 
-			camera.rotate_y(angle)
-
-			project_vertices(vertices, 1, 1)
-
-		move_cube_about_origin()
-
-			if(!vertices || !vertices.len || is_moving)
-				return
-
-			//reposition camera
-			if(!camera)
-				camera = new
-
-			camera.eye = new /vector3(0, 3, 4)
-			camera.gaze = camera.eye.multiply(-1)
-
-			is_moving = 1
-			angle = 5
-			while(is_moving)
-				var/matrix4/rotate_transform = new \
-				(cos(angle), 0, sin(angle), 0, \
-				0, 1, 0, 0, \
-				-1 * sin(angle), 0, cos(angle), 0, \
-				0, 0, 0, 1)
-
-				for(var/vertex/v in vertices)
-					v.position = rotate_transform.multiply(v.position)
-
-				project_vertices(vertices, 1)
-				//angle += 0.05
-				sleep(world.tick_lag)
-
-		camera_look_at(x as num, y as num, z as num)
 			if(!camera)
 				return
 
@@ -441,7 +486,9 @@ client
 
 			project_vertices(vertices, 1, 1)
 
-		vertex_load_from_file(f as file)
+		load_vertices_data_from_file(f as file)
+			set category = "World"
+
 			if(!f)
 				return
 
@@ -730,7 +777,7 @@ client
 			var/t = 3
 			var/b = -3
 			var/n = -1
-			var/f = -3
+			var/f = -30
 
 			src.fov = 2 * arctan(t / abs(n))
 
