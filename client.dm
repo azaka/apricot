@@ -22,6 +22,8 @@ client
 				stat("vertex #[i] (world space)", v.position.string())
 				if(v.clip_position)
 					stat("vertex #[i] (clip space)", v.clip_position.string())
+				if(v.normal)
+					stat("vertex #[i] (normal)", v.normal.string())
 				i++
 
 		if(!camera)
@@ -114,9 +116,8 @@ client
 
 			var/matrix4/model_transform = center_transform.multiply(rotate_transform.multiply(origin_transform))
 
-			var/matrix4/transpose_rotate = rotate_transform.transpose()
-
-			var/matrix4/normal_transform = center_transform.multiply(transpose_rotate.multiply(origin_transform))
+			var/matrix4/normal_transform = model_transform.copy()
+			normal_transform = normal_transform.inverse()
 			normal_transform = normal_transform.transpose()
 
 			var/frame = 1
@@ -497,6 +498,7 @@ client
 				vertices = list()
 
 			var/list/lines = dd_file2list(f)
+			var/offset = vertices.len + 1
 
 
 			#define DATA_TYPE_VERTEX			1
@@ -567,21 +569,43 @@ client
 					if(DATA_TYPE_VERTEX)
 						var/list/vertex_data = data
 
-						var/rgb = vertex_data[4]
-						var/index = 0
-						while(findtext(rgb, " ", ++index, index + 1))
-						rgb = copytext(rgb, index)
+						var/list/params = list()
 
-						var/vertex/v =  new(text2num(vertex_data[1]), text2num(vertex_data[2]), text2num(vertex_data[3]), rgb)
-						vertices += v
+						params += text2num(vertex_data[1])
+						params += text2num(vertex_data[2])
+						params += text2num(vertex_data[3])
 
-			project_vertices(vertices, 1, 1)
+						if(vertex_data.len > 3)
+
+							var/rgb = vertex_data[4]
+							var/index = 0
+							while(findtext(rgb, " ", ++index, index + 1))
+							rgb = copytext(rgb, index)
+
+							params += rgb
+
+						vertices += new /vertex(arglist(params))
+
+						if(vertex_data.len > 4)
+							var/nx = text2num(vertex_data[5])
+							var/ny = text2num(vertex_data[6])
+							var/nz = text2num(vertex_data[7])
+
+							var/vertex/v = vertices[vertices.len]
+							v.normal = new(nx, ny, nz)
+
 
 			#undef DATA_TYPE_VERTEX
 			#undef DATA_TYPE_CAMERA_POSITION
 			#undef DATA_TYPE_LOOKAT
 
-		vertex_add(x as num, y as num, z as num, rgb as color)
+			project_vertices(vertices, 1, 1)
+
+
+
+		add(x as num, y as num, z as num, rgb as color)
+			set category = "World"
+
 			if(!vertices)
 				vertices = list()
 
@@ -901,6 +925,8 @@ client
 
 			ASSERT(test.equals(projection))
 			var/matrix4/view_proj = projection.multiply(view_transform)
+
+
 			screen_transform = window_transform.multiply(projection.multiply(view_transform))
 			//screen_transform.print()
 
@@ -913,10 +939,15 @@ client
 				//(window * ortho) * view
 				screen_transform = window_transform.multiply(ortho_transform.multiply(view_transform))
 
+			var/matrix4/normal_transform = view_proj.copy()
+			normal_transform = normal_transform.inverse()
+			normal_transform = normal_transform.transpose()
+
 			if(depth_test)
 				for(var/i = 1; i <= vertices.len; i += 3)
 					if(i + 2 > vertices.len)
 						return
+
 					var/vertex/v1 = vertices[i]
 					var/vector4/p1 = screen_transform.multiply(v1.position)
 					v1.clip_position = view_proj.multiply(v1.position)
@@ -936,13 +967,15 @@ client
 					var/h2 = p2.homogenize()
 					var/h3 = p3.homogenize()
 
+
+
 					draw_triangle(
 					p1.get_x(), p1.get_y(), p1.get_z(), h1, v1, \
 					p2.get_x(), p2.get_y(), p2.get_z(), h2, v2, \
 					p3.get_x(), p3.get_y(), p3.get_z(), h3, v3, \
 					)
 
-					src << "draw triangle ([p1.get_x()],[p1.get_y()]) ([p2.get_x()],[p2.get_y()]) ([p3.get_x()],[p3.get_y()])"
+					//src << "draw triangle ([p1.get_x()],[p1.get_y()]) ([p2.get_x()],[p2.get_y()]) ([p3.get_x()],[p3.get_y()])"
 
 			else
 
