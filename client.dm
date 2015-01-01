@@ -37,45 +37,9 @@ client
 
 
 	verb
-		frame_spin(angle as num)
-
-			var/x = 0
-			var/y = 0
-			var/z = -2
-
-			var/matrix4/center_transform = new \
-			(1, 0, 0, x, \
-			0, 1, 0, y, \
-			0, 0, 1, z, \
-			0, 0, 0, 1)
-
-			var/matrix4/origin_transform = new \
-			(1, 0, 0, -1 * x, \
-			0, 1, 0, -1 * y, \
-			0, 0, 1, -1 * z, \
-			0, 0, 0, 1)
-
-			//var/angle = 5
-
-			var/matrix4/rotate_transform = new \
-			(cos(angle), 0, sin(angle), 0, \
-			0, 1, 0, 0, \
-			-1 * sin(angle), 0, cos(angle), 0, \
-			0, 0, 0, 1)
-
-			var/matrix4/model_transform = center_transform.multiply(rotate_transform.multiply(origin_transform))
-
-			for(var/vertex/v in vertices)
-				src << "before: "
-				v.position.print()
-				v.position = model_transform.multiply(v.position)
-				src << "after: "
-				v.position.print()
-
-
-			project_vertices(vertices, 1, 1)
-
 		toggle_perspective_correction()
+			set category = "Camera"
+
 			perspective_correction = 1 - perspective_correction
 			src << perspective_correction
 
@@ -157,126 +121,13 @@ client
 
 			fcopy(cache, "anim.dmi")
 
-		generate_spinning_triangle()
-			var/icon/cache = icon()
-			cache.Scale(320, 320)
-
-			ortho_triangle()
-
-			//prevent "reversal"
-			//move_back()
-
-			var/x = 0
-			var/y = 0
-			var/z = -2
-
-			var/matrix4/center_transform = new \
-			(1, 0, 0, x, \
-			0, 1, 0, y, \
-			0, 0, 1, z, \
-			0, 0, 0, 1)
-
-			var/matrix4/origin_transform = new \
-			(1, 0, 0, -1 * x, \
-			0, 1, 0, -1 * y, \
-			0, 0, 1, -1 * z, \
-			0, 0, 0, 1)
-
-			var/angle = 5
-
-			var/matrix4/rotate_transform = new \
-			(cos(angle), 0, sin(angle), 0, \
-			0, 1, 0, 0, \
-			-1 * sin(angle), 0, cos(angle), 0, \
-			0, 0, 0, 1)
-
-			var/matrix4/model_transform = center_transform.multiply(rotate_transform.multiply(origin_transform))
-
-			var/matrix4/transpose_rotate = rotate_transform.transpose()
-
-			var/matrix4/normal_transform = center_transform.multiply(transpose_rotate.multiply(origin_transform))
-			normal_transform = normal_transform.transpose()
-
-			var/frame = 1
-			var/t
-			var/elapsed
-			var/total_frame = round(360 / angle)
-			//one complete rotation
-			var/vector4/n = new
-			while(frame <= total_frame)
-				t = world.timeofday
-				for(var/vertex/v in vertices)
-					v.position = model_transform.multiply(v.position)
-					n = normal_transform.multiply(new /vector4(v.normal, 0))
-					//v.normal = new(n.get_x(), n.get_y(), n.get_z())
-
-				project_vertices(vertices, 1, 1)
-
-				fcopy(canvas.work_icon, "frames/frame[frame].dmi")
-				cache.Insert(icon(canvas.work_icon), frame=frame)
-
-				elapsed = world.timeofday - t
-				src << "generated frame [frame] of [total_frame] (took [elapsed / 10] s)"
-
-				frame++
-
-				sleep(elapsed)
-				//sleep(world.tick_lag)
-
-			src << "replay started..."
-			clear_screen()
-
-			var/obj/O = new
-			O.icon = cache
-			O.screen_loc = "1,1"
-			screen += O
-
-			fcopy(cache, "anim.dmi")
-
-
-		new_pyramid()
-			vertices = list()
-
-			//red front
-			vertices += new /vertex(0, 1, 0, "#f00")
-			vertices += new /vertex(-1, 0, 1, "#f00")
-			vertices += new /vertex(1, 0, 1, "#f00")
-
-			//right green
-			vertices += new /vertex(0, 1, 0, "#0f0")
-			vertices += new /vertex(1, 0, 1, "#0f0")
-			vertices += new /vertex(0, 0, -1, "#0f0")
-
-			//left blue
-			vertices += new /vertex(0, 1, 0, "#00f")
-			vertices += new /vertex(-1, 0, 1, "#00f")
-			vertices += new /vertex(0, 0, -1, "#00f")
-
-			//white base
-			vertices += new /vertex(-1, 0, 1, "#fff")
-			vertices += new /vertex(1, 0, 1, "#fff")
-			vertices += new /vertex(0, 0, -1, "#fff")
+		translate(x as num, y as num, z as num)
+			set category = "Model Transform"
 
 			var/matrix4/translate = new \
-			(1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, -2,
-			0, 0, 0, 1)
-
-			for(var/vertex/v in vertices)
-				v.position = translate.multiply(v.position)
-
-			var/vector3/normal = new(0, 0, 1)
-			for(var/vertex/v in vertices)
-				v.normal = normal.copy()
-
-			project_vertices(vertices, 1, 1)
-
-		translate_pyramid()
-			var/matrix4/translate = new \
-			(1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, -0.1,
+			(1, 0, 0, x,
+			0, 1, 0, y,
+			0, 0, 1, z,
 			0, 0, 0, 1)
 
 			for(var/vertex/v in vertices)
@@ -284,77 +135,36 @@ client
 
 			project_vertices(vertices, 1, 1)
 
-		remove_light()
+		off()
+			set category = "Light"
+
 			light = null
 			project_vertices(vertices, 1, 1)
 
-		apply_white_light()
+		on(rgb as color)
+			set category = "Light"
+
+			//directional light
+			if(!light)
+				light = new
+				light.direction = new(0, 1, 1)
+				light.intensity = rgb
+
+			project_vertices(vertices, 1, 1)
+
+		set_intensity(rgb as color)
+			set category = "Light"
+
 			//directional light
 			if(!light)
 				light = new
 				light.direction = new(0, 1, 1)
 
-			light.intensity = "#fff"
+			light.intensity = rgb
 
 			project_vertices(vertices, 1, 1)
 
-		apply_red_light()
-			if(!light)
-				light = new
-				light.direction = new(0, 1, 1)
-
-			light.intensity = "#f00"
-
-			project_vertices(vertices, 1, 1)
-
-		apply_green_light()
-			if(!light)
-				light = new
-				light.direction = new(0, 1, 1)
-
-			light.intensity = "#0f0"
-
-			project_vertices(vertices, 1, 1)
-
-		apply_blue_light()
-			if(!light)
-				light = new
-				light.direction = new(0, 1, 1)
-
-			light.intensity = "#00f"
-
-			project_vertices(vertices, 1, 1)
-
-		apply_black_light()
-			if(!light)
-				light = new
-				light.direction = new(0, 1, 1)
-
-			light.intensity = "#000"
-
-			project_vertices(vertices, 1, 1)
-
-		ortho_triangle()
-			vertices = list()
-
-			vertices += new /vertex(0, 1, -2, "#f00")
-			vertices += new /vertex(-1, 0, -2, "#0f0")
-			vertices += new /vertex(1, 0, -2, "#00f")
-
-
-			if(!camera)
-				camera = new
-				camera.eye = new(0, 0, 0)
-				camera.gaze = new(0, 0, -1)	//gazes towards -ve z axis
-
-			//assign normals
-			var/vector3/normal = new(0, 0, 1)
-			for(var/vertex/v in vertices)
-				v.normal = normal.copy()
-
-			project_vertices(vertices, 1, 1)
-
-		print_info()
+		info()
 			set category = "Camera"
 
 			if(!camera)
@@ -364,46 +174,9 @@ client
 			camera.gaze.print()
 			camera.up.print()
 
-		new_textured_pyramid()
-			vertices = list()
+		empty()
+			set category = "World"
 
-			var/material/m = new(icon('texture.dmi'))
-
-			//red front
-			vertices += new /vertex(0, 1, 0, m, 0, 0)
-			vertices += new /vertex(-1, 0, 1, m, 1, 0)
-			vertices += new /vertex(1, 0, 1, m, 0, 1)
-
-			//right green
-			vertices += new /vertex(0, 1, 0, m, 0, 0)
-			vertices += new /vertex(1, 0, 1, m, 1, 0)
-			vertices += new /vertex(0, 0, -1, m, 0, 1)
-
-			//left blue
-			vertices += new /vertex(0, 1, 0, m, 0, 0)
-			vertices += new /vertex(-1, 0, 1, m, 1, 0)
-			vertices += new /vertex(0, 0, -1, m, 0, 1)
-
-			//white base
-			vertices += new /vertex(-1, 0, 1, m, 0, 0)
-			vertices += new /vertex(1, 0, 1, m, 1, 0)
-			vertices += new /vertex(0, 0, -1, m, 0, 1)
-
-			var/matrix4/translate = new \
-			(1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, -2,
-			0, 0, 0, 1)
-
-			for(var/vertex/v in vertices)
-				v.position = translate.multiply(v.position)
-
-			project_vertices(vertices, 1, 1)
-
-		draw_vertices_with_view()
-			project_vertices(vertices, 1)
-
-		vertices_clear()
 			vertices = list()
 
 		clear_screen()
@@ -442,23 +215,6 @@ client
 
 			project_vertices(vertices, 1)
 
-		continuously_move_forward()
-			is_moving = 1
-			while(is_moving)
-				camera.eye = camera.eye.add(camera.gaze.multiply(-0.1))
-
-				project_vertices(vertices, 1)
-
-				sleep(10)
-
-		gaze_right()
-			var/x = camera.gaze.get_x() + 0.1
-			camera.gaze.set_x(x)
-			project_vertices(vertices, 1)
-
-		stop()
-			is_moving = 0
-
 		up()
 			set category = "Camera"
 
@@ -488,7 +244,18 @@ client
 
 			project_vertices(vertices, 1, 1)
 
-		load_data_from_file(f as file)
+		set_ambience(rgb as color)
+			set category = "Camera"
+
+			if(!camera)
+				return
+
+			camera.ambience = rgb
+
+			if(light)
+				project_vertices(vertices, 1, 1)
+
+		load_data(f as file)
 			set category = "World"
 
 			if(!f)
@@ -613,45 +380,17 @@ client
 
 			project_vertices(vertices, 1, 1)
 
-		look_from_right_side()
-			if(!camera)
-				return
-
-			camera.eye = new(2, 0, 0)
-			camera.gaze = new(-1, 0, 0)
-
-			project_vertices(vertices, 1, 1)
-
-		look_from_an_angle()
-			if(!camera)
-				return
-
-			camera.eye = camera.eye.add(new /vector3(0, 2, 0))
-			camera.gaze = camera.eye.multiply(-1)
-
-			project_vertices(vertices, 1, 1)
-
-		look_closer()
-			if(!camera)
-				return
-
-			//-ve z
-			camera.eye = camera.eye.add(camera.gaze.multiply(-0.1))
-
-			project_vertices(vertices, 1, 1)
-
-
 	proc
 		draw_triangle(xa, ya, za, h0, vertex/va, xb, yb, zb, h1, vertex/vb, xc, yc, zc, h2, vertex/vc)
 			//should have at least 1 area
 			if(round(abs((xa * yb + xb * yc + xc * ya - xa * yc - xb * ya - xc * yb) * 0.5)))
-				src << "area: [round((xa * yb + xb * yc + xc * ya - xa * yc - xb * ya - xc * yb) * 0.5)]"
+				//src << "area: [round((xa * yb + xb * yc + xc * ya - xa * yc - xb * ya - xc * yb) * 0.5)]"
 
 				var/list/va_rgb = ReadRGB(va.rgb || "#fff")
 				var/list/vb_rgb = ReadRGB(vb.rgb || "#fff")
 				var/list/vc_rgb = ReadRGB(vc.rgb || "#fff")
 
-				src << "vertex color: [va.rgb], [vb.rgb], [vc.rgb]"
+				//src << "vertex color: [va.rgb], [vb.rgb], [vc.rgb]"
 
 				ASSERT((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
 
@@ -662,7 +401,12 @@ client
 					avg_normal.normalize()
 
 					if(va.normal.equals(vb.normal) && vb.normal.equals(vc.normal))
-						ASSERT(avg_normal.equals(va.normal))
+						if(!avg_normal.equals(va.normal))
+							src << "warning inconsistent"
+							avg_normal.print()
+							va.normal.print()
+							vb.normal.print()
+							vc.normal.print()
 
 				for(var/x = 1 to world.maxx * world.icon_size)
 					for(var/y = 1 to world.maxy * world.icon_size)
@@ -729,7 +473,7 @@ client
 									var/vector3/highlight = camera.gaze.add(light.direction)
 									highlight.normalize()
 
-									var/phong = 16
+									var/phong = 64
 									normal.set_x(alpha * va.normal.get_x() + beta * vb.normal.get_x() + gamma * vc.normal.get_x())
 									normal.set_y(alpha * va.normal.get_y() + beta * vb.normal.get_y() + gamma * vc.normal.get_y())
 									normal.set_z(alpha * va.normal.get_z() + beta * vb.normal.get_z() + gamma * vc.normal.get_z())
@@ -856,8 +600,8 @@ client
 				0, 0, 0, 1)
 
 				view_transform = view_scale.multiply(view_translate)
-				src << "view"
-				view_transform.print()
+				//src << "view"
+				//view_transform.print()
 
 			//orthographic box
 			var/l = -3
