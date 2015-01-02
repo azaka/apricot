@@ -22,6 +22,7 @@
 #include "light.dm"
 #include "material.dm"
 #include "matrix4.dm"
+#include "mesh.dm"
 #include "tests.dm"
 #include "vector3.dm"
 #include "vector4.dm"
