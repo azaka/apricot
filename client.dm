@@ -228,6 +228,12 @@ client
 			camera.eye = camera.eye.add(camera.up)
 			project_vertices(vertices, 1, 1)
 
+		forward()
+			set category = "Camera"
+
+			camera.eye = camera.eye.add(camera.gaze)
+			project_vertices(vertices, 1, 1)
+
 		back()
 			set category = "Camera"
 
