@@ -1,3 +1,10 @@
+world
+	New()
+
+		log = file("log.txt")
+		return ..()
+
+
 client
 	var
 		matrix/transform
