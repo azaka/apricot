@@ -487,7 +487,7 @@ client
 									var/vector3/light_dir = light.direction.copy()
 									light_dir.normalize()
 
-									world.log << "light direction: [light_dir.string()]"
+									//world.log << "light direction: [light_dir.string()]"
 
 									var/vector4/position = new
 									position.set_x(alpha * va.position.get_x() + beta * vb.position.get_x() + gamma * vc.position.get_x())
@@ -499,7 +499,7 @@ client
 									var/vector3/highlight = light_dir.add(position3.multiply(-1))
 									highlight.normalize()
 
-									world.log << "highlight direction: [highlight.string()]"
+									//world.log << "highlight direction: [highlight.string()]"
 
 									var/phong = 32
 									normal.set_x(alpha * va.normal.get_x() + beta * vb.normal.get_x() + gamma * vc.normal.get_x())
