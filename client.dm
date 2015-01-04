@@ -240,7 +240,7 @@ client
 			camera.eye = camera.eye.add(camera.gaze.multiply(-1))
 			project_vertices(vertices, 1, 1)
 
-		look_at(x as num, y as num, z as num)
+		look_at(x as num, y as num, z as num, update=1 as num)
 			set category = "Camera"
 
 			if(!camera)
@@ -255,7 +255,8 @@ client
 
 			camera.up = right.cross(camera.gaze)
 
-			project_vertices(vertices, 1, 1)
+			if(update)
+				project_vertices(vertices, 1, 1)
 
 		set_ambience(rgb as color)
 			set category = "Camera"
@@ -321,7 +322,7 @@ client
 						if(!isnum(x) || !isnum(y) || !isnum(z))
 							continue
 
-						look_at(x, y, z)
+						look_at(x, y, z, 0)
 						data_type = DATA_TYPE_VERTEX
 
 						continue
