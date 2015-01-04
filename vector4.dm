@@ -30,6 +30,15 @@ vector4
 		get_z()
 			return dat[3][1]
 
+		set_x(x)
+			dat[1][1] = x
+
+		set_y(y)
+			dat[2][1] = y
+
+		set_z(z)
+			dat[3][1] = z
+
 		get_h()
 			return dat[4][1]
 

@@ -483,10 +483,24 @@ client
 									var/ag = rgb_ambience[2] / 255
 									var/ab = rgb_ambience[3] / 255
 
-									var/vector3/highlight = camera.gaze.add(light.direction)
+									var/vector3/light_dir = light.direction.copy()
+									light_dir.normalize()
+
+									world.log << "light direction: [light_dir.string()]"
+
+									var/vector4/position = new
+									position.set_x(alpha * va.position.get_x() + beta * vb.position.get_x() + gamma * vc.position.get_x())
+									position.set_y(alpha * va.position.get_y() + beta * vb.position.get_y() + gamma * vc.position.get_y())
+									position.set_z(alpha * va.position.get_z() + beta * vb.position.get_z() + gamma * vc.position.get_z())
+
+									var/vector3/position3 = new(position)
+
+									var/vector3/highlight = light_dir.add(position3.multiply(-1))
 									highlight.normalize()
 
-									var/phong = 64
+									world.log << "highlight direction: [highlight.string()]"
+
+									var/phong = 32
 									normal.set_x(alpha * va.normal.get_x() + beta * vb.normal.get_x() + gamma * vc.normal.get_x())
 									normal.set_y(alpha * va.normal.get_y() + beta * vb.normal.get_y() + gamma * vc.normal.get_y())
 									normal.set_z(alpha * va.normal.get_z() + beta * vb.normal.get_z() + gamma * vc.normal.get_z())
