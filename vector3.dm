@@ -8,8 +8,7 @@ vector3
 			dat[1][1] = v.get_x()
 			dat[2][1] = v.get_y()
 			dat[3][1] = v.get_z()
-			world << "created vector3 from vector4"
-			v.print()
+
 		else
 
 			dat[1][1] = x
