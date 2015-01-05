@@ -14,6 +14,15 @@ matrix4
 				dat[r][c] = args[++i]
 
 	proc
+		make_identity()
+			var/matrix4/temp = new(\
+			1, 0, 0, 0,
+			0, 1, 0, 0,
+			0, 0, 1, 0,
+			0, 0, 0, 1)
+
+			dat = temp.dat.Copy()
+
 		multiply(matrix4/m)
 			if(istype(m))
 
