@@ -285,6 +285,9 @@ client
 			#define DATA_TYPE_VERTEX			1
 			#define DATA_TYPE_CAMERA_POSITION	2
 			#define DATA_TYPE_LOOKAT			3
+			#define DATA_TYPE_MATERIAL			4
+
+			var/list/materials = list()
 
 			var/data_type = DATA_TYPE_VERTEX
 
@@ -303,12 +306,26 @@ client
 					data_type = DATA_TYPE_LOOKAT
 					continue
 
+				//material
+				if(findtext(line, "!material", 1, 10))
+					data_type = DATA_TYPE_MATERIAL
+					continue
+
 				//process data
 				var/list/data = dd_text2list(line, ",")
-				if(data.len < 3)
+				if(data.len < 3 && data_type != DATA_TYPE_MATERIAL)
 					continue
 
 				switch(data_type)
+					if(DATA_TYPE_MATERIAL)
+						if(data.len)
+							var/fname = data[1]
+							if(istext(fname))
+								materials += new/material(icon(file(fname)))
+
+						data_type = DATA_TYPE_VERTEX
+
+						continue
 					if(DATA_TYPE_LOOKAT)
 						if(!camera)
 							camera = new
@@ -357,28 +374,37 @@ client
 						params += text2num(vertex_data[3])
 
 						if(vertex_data.len > 3)
+							if(isnum(text2num(vertex_data[4])))
+								params += materials[text2num(vertex_data[4])]
+								params += text2num(vertex_data[5])
+								params += text2num(vertex_data[6])
+								offset = 2
+							else if(istext(vertex_data[4]))
+								var/rgb = vertex_data[4]
+								var/index = 0
+								while(findtext(rgb, " ", ++index, index + 1))
+								rgb = copytext(rgb, index)
 
-							var/rgb = vertex_data[4]
-							var/index = 0
-							while(findtext(rgb, " ", ++index, index + 1))
-							rgb = copytext(rgb, index)
+								params += rgb
+								offset = 0
 
-							params += rgb
+						var/vertex/v = new /vertex(arglist(params))
+						vertices += v
 
-						vertices += new /vertex(arglist(params))
+						if(vertex_data.len > 4 + offset)
+							var/nx = text2num(vertex_data[5 + offset])
+							var/ny = text2num(vertex_data[6 + offset])
+							var/nz = text2num(vertex_data[7 + offset])
 
-						if(vertex_data.len > 4)
-							var/nx = text2num(vertex_data[5])
-							var/ny = text2num(vertex_data[6])
-							var/nz = text2num(vertex_data[7])
-
-							var/vertex/v = vertices[vertices.len]
 							v.normal = new(nx, ny, nz)
+
+
 
 
 			#undef DATA_TYPE_VERTEX
 			#undef DATA_TYPE_CAMERA_POSITION
 			#undef DATA_TYPE_LOOKAT
+			#undef DATA_TYPE_MATERIAL
 
 			project_vertices(vertices, 1, 1)
 
