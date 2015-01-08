@@ -485,7 +485,18 @@ client
 
 									ASSERT(u in 0 to 1 && v in 0 to 1)
 
-									reflectance = va.material.tex.GetPixel(va.material.tex.Width() * u, va.material.tex.Height() * v)
+									var/matrix4/map = new
+									map.make_identity()
+									map.scale(va.material.tex.Width() - 1, va.material.tex.Height() - 1, 1)
+									map.translate(1, 1, 0)
+
+									var/vector4/pixel = map.multiply(new /vector4(u, v, 0, 1))
+
+
+									var/px = pixel.get_x()
+									var/py = pixel.get_y()
+
+									reflectance = va.material.tex.GetPixel(px, py)
 
 								else
 									var/rr = alpha * va_rgb[1] + beta * vb_rgb[1] + gamma * vc_rgb[1]
