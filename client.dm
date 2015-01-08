@@ -1,7 +1,7 @@
 world
 	New()
 
-		log = file("log.txt")
+		//log = file("log.txt")
 		return ..()
 
 
