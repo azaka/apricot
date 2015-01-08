@@ -14,6 +14,32 @@ matrix4
 				dat[r][c] = args[++i]
 
 	proc
+		scale(sx, sy, sz)
+			if(!isnum(sx) || !isnum(sy) || !isnum(sz))
+				return
+
+			var/matrix4/transform = new(\
+			sx, 0, 0, 0,
+			0, sy, 0, 0,
+			0, 0, sz, 0,
+			0, 0, 0, 1)
+
+			var/matrix4/res = transform.multiply(src)
+			dat = res.dat.Copy()
+
+		translate(dx, dy, dz)
+			if(!isnum(dx) || !isnum(dy) || !isnum(dz))
+				return
+
+			var/matrix4/transform = new(\
+			1, 0, 0, dx,
+			0, 1, 0, dy,
+			0, 0, 1, dz,
+			0, 0, 0, 1)
+
+			var/matrix4/res = transform.multiply(src)
+			dat = res.dat.Copy()
+
 		make_identity()
 			var/matrix4/temp = new(\
 			1, 0, 0, 0,
