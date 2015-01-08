@@ -567,54 +567,6 @@ client
 				for(var/y = 1 to world.icon_size * world.maxy)
 					z_buffer[x][y] = null
 
-		add_cube(vector4/center, project)
-			var/list/vertices = list()
-
-			var/matrix4/offset = new \
-			(1, 0, 0, center.get_x(), \
-			0, 1, 0, center.get_y(), \
-			0, 0, 1, center.get_z() + 2, \
-			0, 0, 0, 1)
-
-			//front plane
-			vertices += new /vertex(-1, 1, -1)
-			vertices += new /vertex(1, 1, -1)
-			vertices += new /vertex(1, 1, -1)
-			vertices += new /vertex(1, -1, -1)
-			vertices += new /vertex(1, -1, -1)
-			vertices += new /vertex(-1, -1, -1)
-			vertices += new /vertex(-1, -1, -1)
-			vertices += new /vertex(-1, 1, -1)
-
-			//side
-			vertices += new /vertex(-1, 1, -1)
-			vertices += new /vertex(-1, 1, -3)
-			vertices += new /vertex(1, 1, -1)
-			vertices += new /vertex(1, 1, -3)
-			vertices += new /vertex(1, -1, -1)
-			vertices += new /vertex(1, -1, -3)
-			vertices += new /vertex(-1, -1, -1)
-			vertices += new /vertex(-1, -1, -3)
-
-			//back plane
-			vertices += new /vertex(-1, 1, -3)
-			vertices += new /vertex(1, 1, -3)
-			vertices += new /vertex(1, 1, -3)
-			vertices += new /vertex(1, -1, -3)
-			vertices += new /vertex(1, -1, -3)
-			vertices += new /vertex(-1, -1, -3)
-			vertices += new /vertex(-1, -1, -3)
-			vertices += new /vertex(-1, 1, -3)
-
-			//offset
-			for(var/vertex/v in vertices)
-				v.position = offset.multiply(v.position)
-
-			if(project)
-				project_vertices(vertices, 1)
-
-			return vertices
-
 		project_vertices(list/vertices, apply_view, depth_test, skip_update=0)
 			clear_screen()
 
