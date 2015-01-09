@@ -115,7 +115,7 @@ client
 
 				frame++
 
-				//sleep(elapsed)
+				//sleep(10)
 				sleep(world.tick_lag)
 
 			src << "replay started..."
@@ -436,20 +436,47 @@ client
 
 				var/vector3/normal = new
 				var/vector3/avg_normal = null
+				var/list/rgb_intensity = null
+				var/list/rgb_ambience = null
+				var/ar
+				var/ag
+				var/ab
+				var/vector3/light_dir = null
+				var/lambertian
+
 				if(light)
 					avg_normal = vc.normal.add(vb.normal.add(va.normal))
 					avg_normal.normalize()
 
-					if(va.normal.equals(vb.normal) && vb.normal.equals(vc.normal))
-						if(!avg_normal.equals(va.normal))
-							src << "warning inconsistent"
-							avg_normal.print()
-							va.normal.print()
-							vb.normal.print()
-							vc.normal.print()
+					rgb_intensity = ReadRGB(light.intensity)
+					for(var/i = 1 to rgb_intensity.len)
+						rgb_intensity[i] /= 255
 
-				for(var/x = 1 to world.maxx * world.icon_size)
-					for(var/y = 1 to world.maxy * world.icon_size)
+
+					rgb_ambience = ReadRGB(camera.ambience)
+					ar = rgb_ambience[1] / 255
+					ag = rgb_ambience[2] / 255
+					ab = rgb_ambience[3] / 255
+
+					light_dir = light.direction.copy()
+					light_dir.normalize()
+
+					lambertian = max(0, avg_normal.dot(light.direction))
+
+
+				var/minx = min(xa, xb, xc)
+				var/maxx = max(xa, xb, xc)
+				var/miny = min(ya, yb, yc)
+				var/maxy = max(ya, yb, yc)
+
+				var/matrix4/map = new
+				if(va.material)
+					map.make_identity()
+					map.scale(va.material.tex.Width() - 1, va.material.tex.Height() - 1, 1)
+					map.translate(1, 1, 0)
+
+				for(var/x = round(minx) to round(maxx))
+					for(var/y = round(miny) to round(maxy))
 						var/gamma = ((ya - yb) * x + (xb - xa) * y + xa * yb - xb * ya) \
 									/\
 									((ya - yb) * xc + (xb - xa) * yc + xa * yb - xb * ya)
@@ -485,11 +512,6 @@ client
 
 									ASSERT(u in 0 to 1 && v in 0 to 1)
 
-									var/matrix4/map = new
-									map.make_identity()
-									map.scale(va.material.tex.Width() - 1, va.material.tex.Height() - 1, 1)
-									map.translate(1, 1, 0)
-
 									var/vector4/pixel = map.multiply(new /vector4(u, v, 0, 1))
 
 
@@ -512,18 +534,6 @@ client
 									var/g = rgb_reflectance[2] / 255
 									var/b = rgb_reflectance[3] / 255
 
-									var/list/rgb_intensity = ReadRGB(light.intensity)
-									for(var/i = 1 to rgb_intensity.len)
-										rgb_intensity[i] /= 255
-
-									var/list/rgb_ambience = ReadRGB(camera.ambience)
-									var/ar = rgb_ambience[1] / 255
-									var/ag = rgb_ambience[2] / 255
-									var/ab = rgb_ambience[3] / 255
-
-									var/vector3/light_dir = light.direction.copy()
-									light_dir.normalize()
-
 									//world.log << "light direction: [light_dir.string()]"
 
 									var/vector4/position = new
@@ -543,12 +553,14 @@ client
 									normal.set_y(alpha * va.normal.get_y() + beta * vb.normal.get_y() + gamma * vc.normal.get_y())
 									normal.set_z(alpha * va.normal.get_z() + beta * vb.normal.get_z() + gamma * vc.normal.get_z())
 
-									var/rr = 255 * (r * min(1, ar + rgb_intensity[1] * max(0, avg_normal.dot(light.direction))) \
-													+ rgb_intensity[1] * highlight.dot(normal) ** phong)
-									var/gg = 255 * (g * min(1, ag + rgb_intensity[2] * max(0, avg_normal.dot(light.direction))) \
-													+ rgb_intensity[2] * highlight.dot(normal) ** phong)
-									var/bb = 255 * (b * min(1, ab + rgb_intensity[3] * max(0, avg_normal.dot(light.direction))) \
-													+ rgb_intensity[3] * highlight.dot(normal) ** phong)
+									var/spec_factor = highlight.dot(normal) ** phong
+
+									var/rr = 255 * (r * min(1, ar + rgb_intensity[1] * lambertian) \
+													+ rgb_intensity[1] * spec_factor)
+									var/gg = 255 * (g * min(1, ag + rgb_intensity[2] * lambertian) \
+													+ rgb_intensity[2] * spec_factor)
+									var/bb = 255 * (b * min(1, ab + rgb_intensity[3] * lambertian) \
+													+ rgb_intensity[3] * spec_factor)
 
 									rgb = rgb(rr, gg, bb)
 								else
