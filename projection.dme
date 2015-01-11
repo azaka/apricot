@@ -23,6 +23,7 @@
 #include "material.dm"
 #include "matrix4.dm"
 #include "mesh.dm"
+#include "obj_loader.dm"
 #include "scene_graph.dm"
 #include "tests.dm"
 #include "vector3.dm"

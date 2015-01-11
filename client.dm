@@ -20,6 +20,7 @@ client
 		light/light
 		perspective_correction = 1
 		fov
+		obj_loader/obj_loader
 
 	Stat()
 		if(vertices)
@@ -44,6 +45,29 @@ client
 
 
 	verb
+		import_obj(f as file)
+			set category = "World"
+
+			if(f)
+				if(!obj_loader)
+					obj_loader = new
+
+				var/list/result = obj_loader.load(f)
+
+				src << "loaded [result.len / 3] polys"
+
+				vertices = result
+
+				if(!camera)
+					camera = new
+
+				camera.eye = new(3, 3, 3)
+				look_at(0, 0, -2, 0)
+
+				camera.eye = camera.eye.add(camera.gaze.multiply(3))
+
+				set_intensity(rgb(100, 100, 100))
+
 		toggle_perspective_correction()
 			set category = "Camera"
 
@@ -489,6 +513,9 @@ client
 
 						if((alpha in 0 to 1) && (beta in 0 to 1) && (gamma in 0 to 1))
 							var/z = alpha * za + beta * zb + gamma * zc
+
+							ASSERT(x in 0 to world.icon_size * world.maxx)
+							ASSERT(y in 0 to world.icon_size * world.maxy)
 
 							if(!z_buffer[x][y] || z >= z_buffer[x][y])
 								z_buffer[x][y] = z
